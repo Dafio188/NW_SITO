@@ -2,6 +2,11 @@
 // Routing dinamico AstroGuida con Design System Mac-inspired
 require_once __DIR__ . '/includes/config.php';
 
+// Headers anti-cache per sviluppo
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
+
 // Configurazione errori per sviluppo
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
