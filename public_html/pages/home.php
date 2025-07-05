@@ -222,23 +222,23 @@
                     </div>
                     
                     <div class="gallery-item">
-                        <img src="/fotoastronomia/rosetta.jpg" alt="Nebulosa Rosetta" class="gallery-image">
+                        <img src="/fotoastronomia/rosetta-red.jpg" alt="Nebulosa Rosetta" class="gallery-image">
                         <div class="gallery-overlay">
                             <span>Nebulosa Rosetta</span>
                         </div>
                     </div>
                     
                     <div class="gallery-item">
-                        <img src="/fotoastronomia/velo.jpg" alt="Nebulosa del Velo" class="gallery-image">
+                        <img src="/fotoastronomia/ic443.jpg" alt="Nebulosa Medusa IC443" class="gallery-image">
                         <div class="gallery-overlay">
-                            <span>Nebulosa del Velo</span>
+                            <span>Nebulosa Medusa (IC443)</span>
                         </div>
                     </div>
                     
                     <div class="gallery-item">
-                        <img src="/fotoastronomia/ngc7000.jpg" alt="Nebulosa Nord America NGC7000" class="gallery-image">
+                        <img src="/fotoastronomia/ngc7635.jpg" alt="Nebulosa Bolla NGC7635" class="gallery-image">
                         <div class="gallery-overlay">
-                            <span>Nebulosa Nord America</span>
+                            <span>Nebulosa Bolla (NGC7635)</span>
                         </div>
                     </div>
                 </div>
