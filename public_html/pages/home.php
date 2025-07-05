@@ -76,7 +76,7 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="hero-title fade-in-up">
-                    Esplora l'<span class="highlight cosmic-text">Universo</span> 
+                    Esplora l'<span class="highlight cosmic-text-bright">Universo</span> 
                     con AstroGuida
                 </h1>
                 <p class="hero-subtitle fade-in-up" style="animation-delay: 0.2s;">
@@ -94,35 +94,8 @@
             </div>
         </section>
 
-        <!-- Live Streaming Section -->
-        <section class="section">
-            <div class="container">
-                <div class="live-streaming scale-in">
-                    <div class="live-indicator">
-                        <div class="live-dot"></div>
-                        LIVE - Cielo di Cassano delle Murge
-                    </div>
-                    <h2 class="text-2xl font-bold text-white mb-4">
-                        🔴 Streaming Live del Cielo
-                    </h2>
-                    <p class="text-silver mb-6">
-                        Osserva in tempo reale il cielo notturno di Cassano delle Murge. 
-                        Streaming 24/7 con telecamera astronomica professionale.
-                    </p>
-                    <div class="flex gap-4 flex-wrap">
-                        <a href="/?page=live-sky" class="btn btn-primary">
-                            🎥 Guarda Live
-                        </a>
-                        <a href="/?page=live-sky#archive" class="btn btn-secondary">
-                            📼 Archivio Stream
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <!-- Servizi Principali -->
-        <section class="section">
+        <section class="section section-spaced">
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">I Nostri Servizi</h2>
@@ -132,7 +105,7 @@
                     </p>
                 </div>
                 
-                <div class="services-grid">
+                <div class="services-grid services-grid-spaced">
                     <div class="service-card">
                         <div class="service-icon">📸</div>
                         <h3 class="service-title">Astrofotografia</h3>
@@ -141,7 +114,7 @@
                             Catturiamo galassie, nebulose e pianeti con attrezzature di alta qualità.
                         </p>
                         <div class="service-price">Da €150/sessione</div>
-                        <a href="/?page=services#astrofotografia" class="btn btn-primary w-full">
+                        <a href="/?page=booking" class="btn btn-primary w-full">
                             Prenota Sessione
                         </a>
                     </div>
@@ -154,7 +127,7 @@
                             Perfetto per famiglie e gruppi di amici.
                         </p>
                         <div class="service-price">Da €80/persona</div>
-                        <a href="/?page=services#turismo" class="btn btn-primary w-full">
+                        <a href="/?page=booking" class="btn btn-primary w-full">
                             Prenota Tour
                         </a>
                     </div>
@@ -167,7 +140,7 @@
                             con telescopi professionali.
                         </p>
                         <div class="service-price">Da €50/persona</div>
-                        <a href="/?page=services#osservazione" class="btn btn-primary w-full">
+                        <a href="/?page=booking" class="btn btn-primary w-full">
                             Prenota Osservazione
                         </a>
                     </div>
@@ -180,7 +153,7 @@
                             Adatti a principianti e appassionati.
                         </p>
                         <div class="service-price">Da €120/corso</div>
-                        <a href="/?page=services#corsi" class="btn btn-primary w-full">
+                        <a href="/?page=booking" class="btn btn-primary w-full">
                             Iscriviti
                         </a>
                     </div>
@@ -189,7 +162,7 @@
         </section>
 
         <!-- Gallery Preview -->
-        <section class="section">
+        <section class="section section-spaced">
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Gallery Astrofotografica</h2>
@@ -199,7 +172,7 @@
                     </p>
                 </div>
                 
-                <div class="gallery-grid">
+                <div class="gallery-grid gallery-grid-spaced">
                     <div class="gallery-item">
                         <img src="/fotoastronomia/m31.jpg" alt="Galassia di Andromeda M31" class="gallery-image">
                         <div class="gallery-overlay">
@@ -252,7 +225,7 @@
         </section>
 
         <!-- Features -->
-        <section class="section">
+        <section class="section section-spaced">
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Perché Scegliere AstroGuida</h2>
@@ -262,7 +235,7 @@
                     </p>
                 </div>
                 
-                <div class="features-grid">
+                <div class="features-grid features-grid-spaced">
                     <div class="card">
                         <div class="text-center mb-4">
                             <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl text-white text-2xl mb-4">
@@ -339,7 +312,7 @@
         </section>
 
         <!-- CTA Section -->
-        <section class="section">
+        <section class="section section-spaced">
             <div class="container">
                 <div class="card card-featured text-center">
                     <h2 class="text-3xl font-bold text-white mb-4">
