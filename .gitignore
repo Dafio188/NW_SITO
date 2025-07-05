@@ -1,0 +1,58 @@
+# File sensibili
+public_html/includes/config.php
+public_html/includes/google_oauth_config.php
+client_secret_*.json
+*.key
+*.pem
+
+# Database
+public_html/data/*.sqlite
+public_html/data/*.db
+
+# Upload files
+public_html/uploads/
+uploads/
+
+# Log files
+*.log
+logs/
+
+# Cache files
+cache/
+*.cache
+
+# Backup files
+backups/
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# PHP files
+*.php~
+.phpunit.result.cache
+
+# Node modules (se presenti)
+node_modules/
+
+# Composer
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.production 

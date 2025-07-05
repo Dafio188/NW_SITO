@@ -1,0 +1,21 @@
+{
+  "name": "AstroGuida",
+  "short_name": "AstroGuida",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1D1D1F",
+  "theme_color": "#007AFF",
+  "description": "Astrofotografia e turismo astronomico in Italia.",
+  "icons": [
+    {
+      "src": "/assets/images/logo/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/images/logo/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 

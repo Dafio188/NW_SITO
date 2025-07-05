@@ -1,0 +1,163 @@
+/* CSS minificato e ottimizzato */
+:root {
+    --primary-black: #000000;
+    --space-gray: #1D1D1F;
+    --silver: #F5F5F7;
+    --white: #FFFFFF;
+    --blue-primary: #007AFF;
+    --blue-secondary: #5E5CE6;
+    --purple-cosmic: #5856D6;
+    --indigo-deep: #3A3A3C;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --error: #FF453A;
+    --info: #64D2FF;
+    --glass-light: rgba(255,255,255,0.1);
+    --glass-medium: rgba(255,255,255,0.2);
+    --glass-dark: rgba(0,0,0,0.3);
+    --shadow-soft: 0 4px 20px rgba(0,0,0,0.1);
+    --shadow-medium: 0 8px 30px rgba(0,0,0,0.2);
+    --shadow-hard: 0 12px 40px rgba(0,0,0,0.3);
+    --font-xs: 0.75rem;
+    --font-sm: 0.875rem;
+    --font-base: 1rem;
+    --font-lg: 1.125rem;
+    --font-xl: 1.25rem;
+    --font-2xl: 1.5rem;
+    --font-3xl: 1.875rem;
+    --font-4xl: 2.25rem;
+    --font-5xl: 3rem;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: radial-gradient(ellipse at 60% 40%, #23233a 0%, #1D1D1F 100%);
+    color: var(--white);
+    margin: 0;
+    min-height: 100vh;
+    font-size: var(--font-base);
+    line-height: 1.6;
+}
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--glass-dark);
+    padding: 16px 32px;
+    box-shadow: var(--shadow-soft);
+    border-bottom: 1px solid var(--glass-medium);
+}
+nav a {
+    color: var(--white);
+    text-decoration: none;
+    margin: 0 12px;
+    font-weight: 500;
+    transition: color .2s;
+    font-size: var(--font-lg);
+}
+nav a:hover {
+    color: var(--blue-primary);
+}
+.hero {
+    text-align: center;
+    padding: 48px 16px 32px 16px;
+    background: var(--glass-light);
+    border-radius: 24px;
+    margin: 32px auto 24px auto;
+    max-width: 700px;
+    box-shadow: var(--shadow-medium);
+    animation: fadeIn 1.2s cubic-bezier(.4,0,.2,1);
+}
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all .3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: var(--font-base);
+}
+.btn-primary {
+    background: linear-gradient(135deg, var(--blue-primary), var(--blue-secondary));
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(0,122,255,0.15);
+}
+.btn-primary:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 10px 30px rgba(0,122,255,0.3);
+}
+.card {
+    background: var(--glass-light);
+    border: 1px solid var(--glass-medium);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    padding: 24px;
+    margin: 16px auto;
+    max-width: 480px;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--shadow-medium);
+}
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--glass-medium);
+    border-radius: 10px;
+    background: var(--glass-light);
+    color: var(--white);
+    font-size: 16px;
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+}
+.form-input:focus {
+    outline: none;
+    border-color: var(--blue-primary);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.3);
+}
+footer {
+    text-align: center;
+    padding: 24px 0 12px 0;
+    background: var(--glass-dark);
+    color: var(--silver);
+    font-size: var(--font-sm);
+    margin-top: 48px;
+    border-top: 1px solid var(--glass-medium);
+}
+@media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        padding: 12px 8px;
+    }
+    nav {
+        margin-top: 8px;
+    }
+    .hero {
+        padding: 32px 8px 20px 8px;
+        margin: 16px 4px 12px 4px;
+    }
+    .card {
+        padding: 16px;
+        max-width: 98vw;
+    }
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: none; }
+}
+.stars {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+img[loading="lazy"] {
+    filter: blur(4px);
+    transition: filter 0.4s;
+}
+img[loading="lazy"].loaded {
+    filter: none;
+} 
