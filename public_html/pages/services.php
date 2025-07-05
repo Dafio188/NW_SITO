@@ -16,22 +16,31 @@ require_once __DIR__ . '/../includes/config.php';
         <header class="header">
             <div class="header-content">
                 <a href="/" class="logo">
-                    <div class="logo-icon">🌟</div>
+                    <div class="logo-icon">
+                        <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo">
+                    </div>
                     <span>AstroGuida</span>
                 </a>
                 
                 <nav class="nav-main">
                     <a href="/" class="nav-link">Home</a>
-                    <a href="/services" class="nav-link active">Servizi</a>
-                    <a href="/gallery" class="nav-link">Gallery</a>
-                    <a href="/live-sky" class="nav-link">Live Sky</a>
-                    <a href="/about" class="nav-link">Chi Siamo</a>
-                    <a href="/contact" class="nav-link">Contatti</a>
+                    <a href="/?page=services" class="nav-link active">Servizi</a>
+                    <a href="/?page=gallery" class="nav-link">Gallery</a>
+                    <a href="/?page=live-sky" class="nav-link">Live Sky</a>
+                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
+                    <a href="/?page=contact" class="nav-link">Contatti</a>
                 </nav>
                 
                 <div class="user-menu">
-                    <a href="/booking" class="btn btn-primary btn-sm">Prenota</a>
-                    <a href="/login" class="btn btn-ghost btn-sm">Accedi</a>
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <a href="/?page=dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
+                        <div class="user-avatar" title="<?= htmlspecialchars($_SESSION['user_name']) ?>">
+                            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
+                        </div>
+                    <?php else: ?>
+                        <a href="/?page=login" class="btn btn-ghost btn-sm">Accedi</a>
+                        <a href="/?page=register" class="btn btn-primary btn-sm">Registrati</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </header>
@@ -40,7 +49,7 @@ require_once __DIR__ . '/../includes/config.php';
         <section class="hero">
             <div class="hero-content">
                 <h1 class="hero-title fade-in-up">
-                    I Nostri <span class="highlight cosmic-text">Servizi</span>
+                    I Nostri <span class="highlight cosmic-text-bright">Servizi</span>
                 </h1>
                 <p class="hero-subtitle fade-in-up" style="animation-delay: 0.2s;">
                     Scopri l'universo con i nostri servizi professionali di astrofotografia, 
@@ -82,7 +91,7 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">per sessione</span>
                             </div>
                             
-                            <a href="/booking?service=astrofotografia" class="btn btn-primary btn-lg">
+                            <a href="/?page=booking&service=astrofotografia" class="btn btn-primary btn-lg">
                                 📸 Prenota Sessione
                             </a>
                         </div>
@@ -141,7 +150,7 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">per persona</span>
                             </div>
                             
-                            <a href="/booking?service=turismo" class="btn btn-primary btn-lg">
+                            <a href="/?page=booking&service=turismo" class="btn btn-primary btn-lg">
                                 🌌 Prenota Tour
                             </a>
                         </div>
@@ -189,7 +198,7 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">per persona</span>
                             </div>
                             
-                            <a href="/booking?service=osservazione" class="btn btn-primary btn-lg">
+                            <a href="/?page=booking&service=osservazione" class="btn btn-primary btn-lg">
                                 🔭 Prenota Osservazione
                             </a>
                         </div>
@@ -199,8 +208,7 @@ require_once __DIR__ . '/../includes/config.php';
                                 <h3 class="text-2xl font-bold text-white mb-4">Calendario Lunare</h3>
                                 <div class="text-6xl mb-4">🌙</div>
                                 <p class="text-silver mb-4">Prossima Luna Nuova</p>
-                                <p class="text-xl font-semibold text-cyan">15 Febbraio 2025</p>
-                                <p class="text-sm text-silver mt-2">Condizioni ottimali per cielo profondo</p>
+                                <p class="text-cyan font-semibold">15 Gennaio 2025</p>
                             </div>
                         </div>
                     </div>
@@ -208,123 +216,65 @@ require_once __DIR__ . '/../includes/config.php';
 
                 <!-- Corsi di Astronomia -->
                 <div class="card card-featured mb-12" id="corsi">
-                    <div class="text-center mb-8">
-                        <div class="service-icon mx-auto mb-4">🎓</div>
-                        <h2 class="text-3xl font-bold text-white mb-4">Corsi di Astronomia</h2>
-                        <p class="text-silver text-lg max-w-2xl mx-auto">
-                            Corsi teorici e pratici per imparare l'astronomia e l'astrofotografia. 
-                            Adatti sia a principianti che ad appassionati avanzati.
-                        </p>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-3 gap-6">
-                        <div class="bg-glass-medium p-6 rounded-xl">
-                            <h3 class="text-xl font-semibold text-white mb-3">Corso Base</h3>
-                            <ul class="text-silver text-sm space-y-1 mb-4">
-                                <li>• Introduzione all'astronomia</li>
-                                <li>• Uso del telescopio</li>
-                                <li>• Riconoscimento costellazioni</li>
-                                <li>• 4 lezioni teoriche + 2 pratiche</li>
-                            </ul>
-                            <div class="text-center">
-                                <div class="text-xl font-bold text-cyan mb-2">€120</div>
-                                <a href="/booking?service=corso-base" class="btn btn-secondary w-full">Iscriviti</a>
+                    <div class="grid md:grid-cols-2 gap-8 items-center">
+                        <div class="text-center">
+                            <div class="bg-gradient-primary p-8 rounded-2xl">
+                                <h3 class="text-2xl font-bold text-white mb-4">Corso Base</h3>
+                                <div class="text-6xl mb-4">🎓</div>
+                                <p class="text-silver mb-4">8 Lezioni Teoriche + 4 Pratiche</p>
+                                <p class="text-cyan font-semibold text-2xl">€120</p>
                             </div>
                         </div>
                         
-                        <div class="bg-glass-medium p-6 rounded-xl border-2 border-cyan">
-                            <div class="badge badge-primary mb-3">Più Popolare</div>
-                            <h3 class="text-xl font-semibold text-white mb-3">Corso Astrofotografia</h3>
-                            <ul class="text-silver text-sm space-y-1 mb-4">
-                                <li>• Tecniche di ripresa</li>
-                                <li>• Elaborazione immagini</li>
-                                <li>• Attrezzature professionali</li>
-                                <li>• 6 lezioni teoriche + 4 pratiche</li>
-                            </ul>
-                            <div class="text-center">
-                                <div class="text-xl font-bold text-cyan mb-2">€280</div>
-                                <a href="/booking?service=corso-astrofoto" class="btn btn-primary w-full">Iscriviti</a>
+                        <div>
+                            <div class="flex items-center mb-4">
+                                <div class="service-icon mr-4">🎓</div>
+                                <h2 class="text-3xl font-bold text-white">Corsi di Astronomia</h2>
                             </div>
-                        </div>
-                        
-                        <div class="bg-glass-medium p-6 rounded-xl">
-                            <h3 class="text-xl font-semibold text-white mb-3">Corso Avanzato</h3>
-                            <ul class="text-silver text-sm space-y-1 mb-4">
-                                <li>• Spettroscopia</li>
-                                <li>• Fotometria</li>
-                                <li>• Ricerca scientifica</li>
-                                <li>• 8 lezioni teoriche + 6 pratiche</li>
-                            </ul>
-                            <div class="text-center">
-                                <div class="text-xl font-bold text-cyan mb-2">€450</div>
-                                <a href="/booking?service=corso-avanzato" class="btn btn-secondary w-full">Iscriviti</a>
+                            <p class="text-silver mb-6 text-lg">
+                                Corsi completi per principianti e appassionati. Impara le basi dell'astronomia, 
+                                l'uso del telescopio e le tecniche di osservazione.
+                            </p>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-xl font-semibold text-white mb-3">Programma del Corso:</h3>
+                                <ul class="text-silver space-y-2">
+                                    <li>📚 Sistema Solare e Pianeti</li>
+                                    <li>⭐ Stelle e Costellazioni</li>
+                                    <li>🌌 Galassie e Cosmologia</li>
+                                    <li>🔭 Uso del Telescopio</li>
+                                    <li>📸 Introduzione all'Astrofotografia</li>
+                                    <li>🌙 Osservazioni Pratiche</li>
+                                </ul>
                             </div>
+                            
+                            <div class="flex items-center gap-4 mb-6">
+                                <span class="text-2xl font-bold text-cyan">€120</span>
+                                <span class="text-silver">corso completo</span>
+                            </div>
+                            
+                            <a href="/?page=booking&service=corsi" class="btn btn-primary btn-lg">
+                                🎓 Iscriviti al Corso
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- FAQ Servizi -->
+        <!-- CTA Section -->
         <section class="section">
             <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title">Domande Frequenti</h2>
-                </div>
-                
-                <div class="max-w-3xl mx-auto">
-                    <div class="space-y-4">
-                        <div class="card">
-                            <h3 class="font-semibold text-white mb-2">Cosa succede in caso di maltempo?</h3>
-                            <p class="text-silver">
-                                In caso di condizioni meteorologiche avverse, offriamo il rimborso completo 
-                                o la possibilità di riprogrammare la sessione senza costi aggiuntivi.
-                            </p>
-                        </div>
-                        
-                        <div class="card">
-                            <h3 class="font-semibold text-white mb-2">Serve esperienza precedente?</h3>
-                            <p class="text-silver">
-                                No, i nostri servizi sono adatti a tutti i livelli. Le guide esperte 
-                                ti accompagneranno passo dopo passo nell'esperienza astronomica.
-                            </p>
-                        </div>
-                        
-                        <div class="card">
-                            <h3 class="font-semibold text-white mb-2">Cosa devo portare?</h3>
-                            <p class="text-silver">
-                                Consigliamo abbigliamento caldo, scarpe comode e una torcia con luce rossa. 
-                                Tutta l'attrezzatura astronomica è fornita da noi.
-                            </p>
-                        </div>
-                        
-                        <div class="card">
-                            <h3 class="font-semibold text-white mb-2">I servizi sono adatti ai bambini?</h3>
-                            <p class="text-silver">
-                                Assolutamente sì! Abbiamo programmi specifici per famiglie con bambini 
-                                a partire dai 6 anni. L'astronomia è un'esperienza magica per tutte le età.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- CTA -->
-        <section class="section">
-            <div class="container">
-                <div class="card card-cosmic text-center">
-                    <h2 class="text-3xl font-bold text-white mb-4">
-                        Pronto per la Tua Avventura Stellare?
-                    </h2>
-                    <p class="text-lg text-silver mb-8">
-                        Scegli il servizio che più ti interessa e prenota la tua esperienza astronomica.
+                <div class="card card-featured text-center">
+                    <h2 class="text-3xl font-bold text-white mb-4">Pronto per Esplorare l'Universo?</h2>
+                    <p class="text-silver mb-8 text-lg">
+                        Prenota il tuo servizio preferito e inizia il tuo viaggio tra le stelle
                     </p>
                     <div class="flex gap-4 justify-center flex-wrap">
-                        <a href="/booking" class="btn btn-primary btn-lg stellar-glow">
+                        <a href="/?page=booking" class="btn btn-primary btn-lg">
                             🚀 Prenota Ora
                         </a>
-                        <a href="/contact" class="btn btn-secondary btn-lg">
+                        <a href="/?page=contact" class="btn btn-secondary btn-lg">
                             💬 Contattaci
                         </a>
                     </div>
@@ -337,18 +287,38 @@ require_once __DIR__ . '/../includes/config.php';
             <div class="footer-content">
                 <div class="footer-grid">
                     <div class="footer-section">
-                        <h3>AstroGuida</h3>
-                        <p>La tua guida professionale per esplorare l'universo.</p>
+                        <div class="flex items-center mb-4">
+                            <div class="logo-icon mr-3">
+                                <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo">
+                            </div>
+                            <h3 class="text-xl font-bold">AstroGuida</h3>
+                        </div>
+                        <p>
+                            La tua guida professionale per esplorare l'universo. 
+                            Astrofotografia e turismo astronomico in Puglia.
+                        </p>
                     </div>
+                    
                     <div class="footer-section">
                         <h3>Servizi</h3>
                         <ul class="space-y-2">
-                            <li><a href="#astrofotografia">Astrofotografia</a></li>
-                            <li><a href="#turismo">Turismo Astronomico</a></li>
-                            <li><a href="#osservazione">Osservazione Guidata</a></li>
-                            <li><a href="#corsi">Corsi di Astronomia</a></li>
+                            <li><a href="/?page=services#astrofotografia">Astrofotografia</a></li>
+                            <li><a href="/?page=services#turismo">Turismo Astronomico</a></li>
+                            <li><a href="/?page=services#osservazione">Osservazione Guidata</a></li>
+                            <li><a href="/?page=services#corsi">Corsi di Astronomia</a></li>
                         </ul>
                     </div>
+                    
+                    <div class="footer-section">
+                        <h3>Info Utili</h3>
+                        <ul class="space-y-2">
+                            <li><a href="/?page=gallery">Gallery</a></li>
+                            <li><a href="/?page=about">Chi Siamo</a></li>
+                            <li><a href="/?page=contact">Contatti</a></li>
+                            <li><a href="/?page=faq">FAQ</a></li>
+                        </ul>
+                    </div>
+                    
                     <div class="footer-section">
                         <h3>Contatti</h3>
                         <p>📍 Cassano delle Murge, Puglia</p>
@@ -356,13 +326,29 @@ require_once __DIR__ . '/../includes/config.php';
                         <p>📱 +39 XXX XXX XXXX</p>
                     </div>
                 </div>
+                
                 <div class="footer-bottom">
-                    <p>&copy; 2025 AstroGuida. Tutti i diritti riservati.</p>
+                    <p>&copy; 2025 AstroGuida. Tutti i diritti riservati. | 
+                       <a href="/?page=privacy" class="hover:text-cyan">Privacy Policy</a> | 
+                       <a href="/?page=terms" class="hover:text-cyan">Termini di Servizio</a>
+                    </p>
                 </div>
             </div>
         </footer>
     </div>
 
+    <!-- JavaScript -->
     <script src="/assets/js/stellar-animations.js"></script>
+    <script>
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
 </body>
 </html> 

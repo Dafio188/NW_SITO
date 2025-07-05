@@ -7,6 +7,18 @@ DirectoryIndex index.php index.html
 RewriteCond %{THE_REQUEST} \s/+index\.html[\s?] [NC]
 RewriteRule ^index\.html$ / [R=301,L]
 
+# Redirect delle pagine dirette al sistema di routing
+RewriteRule ^services/?$ /?page=services [R=301,L]
+RewriteRule ^gallery/?$ /?page=gallery [R=301,L]
+RewriteRule ^booking/?$ /?page=booking [R=301,L]
+RewriteRule ^login/?$ /?page=login [R=301,L]
+RewriteRule ^register/?$ /?page=register [R=301,L]
+RewriteRule ^about/?$ /?page=about [R=301,L]
+RewriteRule ^contact/?$ /?page=contact [R=301,L]
+RewriteRule ^live-sky/?$ /?page=live-sky [R=301,L]
+RewriteRule ^dashboard/?$ /?page=dashboard [R=301,L]
+RewriteRule ^admin/?$ /?page=admin [R=301,L]
+
 # HTTPS redirect
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
