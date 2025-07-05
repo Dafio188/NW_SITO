@@ -1,4 +1,6 @@
-<?php /* Live Sky AstroGuida */ ?>
+<?php /* Live Sky AstroGuida */
+require_once __DIR__ . '/../includes/config.php';
+?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
