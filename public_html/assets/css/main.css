@@ -916,4 +916,214 @@ img[loading="lazy"].loaded {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+/* === AUTHENTICATION STYLES === */
+.auth-container {
+    padding: 2rem 0;
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-form {
+    background: var(--glass-light);
+    border: 1px solid var(--glass-medium);
+    border-radius: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 3rem;
+    margin: 2rem auto;
+    max-width: 480px;
+    box-shadow: var(--shadow-medium);
+    transition: all 0.3s ease;
+}
+
+.auth-form:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hard);
+}
+
+.form-title {
+    font-size: var(--font-2xl);
+    font-weight: var(--font-bold);
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--white);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-weight: var(--font-medium);
+    margin-bottom: 0.5rem;
+    color: var(--white);
+    font-size: var(--font-sm);
+}
+
+.form-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--glass-medium);
+    border-radius: 12px;
+    background: var(--glass-light);
+    color: var(--white);
+    font-size: var(--font-base);
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--blue-primary);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.3);
+    background: var(--glass-medium);
+}
+
+.form-input::placeholder {
+    color: var(--silver);
+    opacity: 0.7;
+}
+
+.form-help {
+    font-size: var(--font-xs);
+    color: var(--silver);
+    margin-top: 0.25rem;
+}
+
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem;
+    background: var(--white);
+    color: var(--space-gray);
+    border: 1px solid var(--glass-medium);
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: var(--font-medium);
+    transition: all 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.google-login-btn:hover {
+    background: var(--silver);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+}
+
+.divider {
+    position: relative;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--glass-medium);
+}
+
+.divider span {
+    background: var(--glass-light);
+    padding: 0 1rem;
+    color: var(--silver);
+    font-size: var(--font-sm);
+}
+
+.auth-links {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.auth-links p {
+    margin: 0.75rem 0;
+    color: var(--silver);
+    font-size: var(--font-sm);
+}
+
+.auth-links a {
+    color: var(--cyan-bright);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.auth-links a:hover {
+    color: var(--white);
+}
+
+.success-message {
+    text-align: center;
+    padding: 2rem;
+}
+
+.success-message .text-6xl {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: var(--font-medium);
+}
+
+.alert-error {
+    background: rgba(255, 69, 58, 0.1);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+    color: var(--error);
+}
+
+.alert-success {
+    background: rgba(48, 209, 88, 0.1);
+    border: 1px solid rgba(48, 209, 88, 0.3);
+    color: var(--success);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: var(--font-sm);
+    color: var(--silver);
+    line-height: 1.5;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    accent-color: var(--blue-primary);
+}
+
+.text-cyan {
+    color: var(--cyan-bright);
+}
+
+@media (max-width: 768px) {
+    .auth-form {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+        max-width: none;
+    }
+    
+    .form-title {
+        font-size: var(--font-xl);
+    }
+    
+    .success-message .text-6xl {
+        font-size: 3rem;
+    }
 } 
