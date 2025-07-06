@@ -14,30 +14,72 @@ if (!$auth->isLogged()) {
 $user = $auth->currentUser();
 $userId = $user['id'];
 
+// DEBUG: Aggiungi informazioni di debug
+$debug_info = [];
+$debug_info['user_id'] = $userId;
+$debug_info['user_email'] = $user['email'];
+
 // Recupera prenotazioni dell'utente
 try {
     $db = getDb();
     
-    // Query per recuperare le prenotazioni
+    // Prima verifica la struttura della tabella
+    $columns = $db->query("PRAGMA table_info(bookings)")->fetchAll();
+    $debug_info['table_columns'] = array_column($columns, 'name');
+    
+    // Verifica se ci sono prenotazioni in generale
+    $total_bookings = $db->query("SELECT COUNT(*) as count FROM bookings")->fetch();
+    $debug_info['total_bookings_in_db'] = $total_bookings['count'];
+    
+    // Query per recuperare le prenotazioni - versione migliorata
     $stmt = $db->prepare("
-        SELECT booking_id, service_name, booking_date, booking_time, 
-               participants, total_amount, status, created_at, message
-        FROM bookings 
-        WHERE user_id = ? OR email = ?
-        ORDER BY booking_date DESC, created_at DESC
+        SELECT * FROM bookings 
+        WHERE (user_id = ? OR email = ?) 
+        ORDER BY 
+            CASE 
+                WHEN booking_date IS NOT NULL THEN booking_date 
+                ELSE created_at 
+            END DESC,
+            created_at DESC
     ");
     
     $stmt->execute([$userId, $user['email']]);
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    $debug_info['bookings_found'] = count($bookings);
+    $debug_info['query_params'] = [$userId, $user['email']];
+    
+    // Se non trova prenotazioni, prova query alternative
+    if (empty($bookings)) {
+        // Prova solo con user_id
+        $stmt2 = $db->prepare("SELECT * FROM bookings WHERE user_id = ?");
+        $stmt2->execute([$userId]);
+        $bookings_by_user = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        $debug_info['bookings_by_user_id'] = count($bookings_by_user);
+        
+        // Prova solo con email
+        $stmt3 = $db->prepare("SELECT * FROM bookings WHERE email = ?");
+        $stmt3->execute([$user['email']]);
+        $bookings_by_email = $stmt3->fetchAll(PDO::FETCH_ASSOC);
+        $debug_info['bookings_by_email'] = count($bookings_by_email);
+        
+        // Usa il risultato migliore
+        if (!empty($bookings_by_user)) {
+            $bookings = $bookings_by_user;
+        } elseif (!empty($bookings_by_email)) {
+            $bookings = $bookings_by_email;
+        }
+    }
+    
     // Statistiche
     $totalBookings = count($bookings);
-    $pendingBookings = count(array_filter($bookings, fn($b) => $b['status'] === 'pending'));
-    $confirmedBookings = count(array_filter($bookings, fn($b) => $b['status'] === 'confirmed'));
-    $totalSpent = array_sum(array_column(array_filter($bookings, fn($b) => $b['status'] === 'confirmed'), 'total_amount'));
+    $pendingBookings = count(array_filter($bookings, fn($b) => ($b['status'] ?? 'pending') === 'pending'));
+    $confirmedBookings = count(array_filter($bookings, fn($b) => ($b['status'] ?? 'pending') === 'confirmed'));
+    $totalSpent = array_sum(array_column(array_filter($bookings, fn($b) => ($b['status'] ?? 'pending') === 'confirmed'), 'total_amount'));
     
 } catch (Exception $e) {
     error_log("Errore recupero prenotazioni utente: " . $e->getMessage());
+    $debug_info['error'] = $e->getMessage();
     $bookings = [];
     $totalBookings = $pendingBookings = $confirmedBookings = $totalSpent = 0;
 }
@@ -57,6 +99,17 @@ try {
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
+        }
+        
+        .debug-info {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #ffc107;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
         
         .stats-grid {
@@ -200,23 +253,23 @@ try {
             transform: translateY(-2px);
         }
         
-        .btn-secondary-small {
-            background: rgba(255, 255, 255, 0.1);
+        .btn-success-small {
+            background: #28a745;
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
-        .btn-secondary-small:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .btn-success-small:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
         }
         
-        .empty-state {
+        .no-bookings {
             text-align: center;
             padding: 3rem;
             color: rgba(255, 255, 255, 0.6);
         }
         
-        .empty-state h3 {
+        .no-bookings h3 {
             color: #64ffda;
             margin-bottom: 1rem;
         }
@@ -229,7 +282,7 @@ try {
             .booking-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 0.5rem;
+                gap: 1rem;
             }
             
             .booking-actions {
@@ -257,6 +310,14 @@ try {
                 </p>
             </div>
 
+            <!-- DEBUG INFO -->
+            <?php if (isset($_GET['debug'])): ?>
+            <div class="debug-info">
+                <h3>🔍 Informazioni Debug:</h3>
+                <pre><?php print_r($debug_info); ?></pre>
+            </div>
+            <?php endif; ?>
+
             <!-- Statistiche -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -272,8 +333,8 @@ try {
                     <div class="stat-label">Confermate</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">€<?= number_format($totalSpent, 0) ?></div>
-                    <div class="stat-label">Totale Speso</div>
+                    <div class="stat-number">€<?= number_format($totalSpent, 2) ?></div>
+                    <div class="stat-label">Spesa Totale</div>
                 </div>
             </div>
 
@@ -282,93 +343,72 @@ try {
                 <h2 class="text-2xl font-bold text-white mb-6">🗓️ Cronologia Prenotazioni</h2>
                 
                 <?php if (empty($bookings)): ?>
-                    <div class="empty-state">
-                        <div class="text-6xl mb-4">🌟</div>
-                        <h3>Nessuna prenotazione ancora</h3>
-                        <p>Inizia la tua avventura astronomica prenotando la tua prima esperienza!</p>
-                        <a href="/?page=booking" class="btn btn-primary mt-4">
-                            🚀 Prenota Ora
+                    <div class="no-bookings">
+                        <h3>🌟 Nessuna Prenotazione Trovata</h3>
+                        <p>Non hai ancora effettuato prenotazioni.</p>
+                        <p>Inizia la tua avventura astronomica!</p>
+                        <a href="/?page=services" class="btn-primary-small" style="display: inline-block; margin-top: 1rem;">
+                            Prenota Ora
                         </a>
+                        <br><br>
+                        <p><small><a href="?debug=1" style="color: #64ffda;">Mostra info debug</a></small></p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($bookings as $booking): ?>
-                        <div class="booking-item <?= $booking['status'] ?>">
+                        <div class="booking-item <?= $booking['status'] ?? 'pending' ?>">
                             <div class="booking-header">
                                 <div class="booking-title">
-                                    <?= htmlspecialchars($booking['service_name']) ?>
+                                    <?= htmlspecialchars($booking['service_name'] ?? 'Servizio Non Specificato') ?>
                                 </div>
-                                <div class="booking-status status-<?= $booking['status'] ?>">
-                                    <?php
-                                    switch ($booking['status']) {
-                                        case 'pending':
-                                            echo '⏳ In Attesa';
-                                            break;
-                                        case 'confirmed':
-                                            echo '✅ Confermata';
-                                            break;
-                                        case 'cancelled':
-                                            echo '❌ Annullata';
-                                            break;
-                                        default:
-                                            echo ucfirst($booking['status']);
-                                    }
-                                    ?>
+                                <div class="booking-status status-<?= $booking['status'] ?? 'pending' ?>">
+                                    <?= ucfirst($booking['status'] ?? 'pending') ?>
                                 </div>
                             </div>
                             
                             <div class="booking-details">
                                 <div class="booking-detail">
                                     <strong>📅 Data:</strong><br>
-                                    <?= date('d/m/Y', strtotime($booking['booking_date'])) ?>
+                                    <?= $booking['booking_date'] ? date('d/m/Y', strtotime($booking['booking_date'])) : 'Non specificata' ?>
                                 </div>
                                 <div class="booking-detail">
-                                    <strong>🕐 Orario:</strong><br>
-                                    <?= $booking['booking_time'] ?: 'Da definire' ?>
+                                    <strong>🕒 Orario:</strong><br>
+                                    <?= $booking['booking_time'] ?? 'Non specificato' ?>
                                 </div>
                                 <div class="booking-detail">
                                     <strong>👥 Partecipanti:</strong><br>
-                                    <?= $booking['participants'] ?> persone
+                                    <?= $booking['participants'] ?? 1 ?>
                                 </div>
                                 <div class="booking-detail">
                                     <strong>💰 Importo:</strong><br>
-                                    €<?= number_format($booking['total_amount'], 2) ?>
+                                    €<?= number_format($booking['total_amount'] ?? 0, 2) ?>
                                 </div>
                                 <div class="booking-detail">
-                                    <strong>🔖 Codice:</strong><br>
-                                    <?= htmlspecialchars($booking['booking_id']) ?>
+                                    <strong>🎫 Codice:</strong><br>
+                                    <?= $booking['booking_id'] ?? 'N/A' ?>
                                 </div>
                                 <div class="booking-detail">
-                                    <strong>📝 Prenotato il:</strong><br>
-                                    <?= date('d/m/Y H:i', strtotime($booking['created_at'])) ?>
+                                    <strong>�� Email:</strong><br>
+                                    <?= htmlspecialchars($booking['email'] ?? 'N/A') ?>
                                 </div>
                             </div>
                             
-                            <?php if ($booking['message']): ?>
+                            <?php if (!empty($booking['message'])): ?>
                                 <div class="booking-detail">
-                                    <strong>💬 Note:</strong><br>
+                                    <strong>📝 Note:</strong><br>
                                     <?= htmlspecialchars($booking['message']) ?>
                                 </div>
                             <?php endif; ?>
                             
                             <div class="booking-actions">
-                                <?php if ($booking['status'] === 'pending'): ?>
-                                    <a href="/paypal-payment.php?booking_id=<?= urlencode($booking['booking_id']) ?>&amount=<?= $booking['total_amount'] ?>" 
-                                       class="btn-small btn-primary-small">
+                                <?php if (($booking['status'] ?? 'pending') === 'pending'): ?>
+                                    <a href="/?page=booking&booking_id=<?= $booking['booking_id'] ?>" class="btn-primary-small">
                                         💳 Completa Pagamento
                                     </a>
                                 <?php endif; ?>
                                 
-                                <a href="/?page=contact&subject=Prenotazione <?= urlencode($booking['booking_id']) ?>" 
-                                   class="btn-small btn-secondary-small">
+                                <a href="/?page=contact" class="btn-success-small">
                                     📞 Contatta Supporto
                                 </a>
-                                
-                                <?php if ($booking['status'] === 'confirmed' && strtotime($booking['booking_date']) > time()): ?>
-                                    <a href="/?page=booking&service=<?= urlencode(strtolower(str_replace(' ', '-', $booking['service_name']))) ?>" 
-                                       class="btn-small btn-secondary-small">
-                                        🔄 Prenota Ancora
-                                    </a>
-                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -377,11 +417,11 @@ try {
             
             <!-- Azioni Rapide -->
             <div class="text-center mt-8">
-                <a href="/?page=booking" class="btn btn-primary btn-lg mr-4">
+                <a href="/?page=services" class="btn btn-primary btn-lg mr-4">
                     🚀 Nuova Prenotazione
                 </a>
-                <a href="/?page=services" class="btn btn-secondary btn-lg">
-                    🌟 Scopri Servizi
+                <a href="/?page=profile" class="btn btn-secondary btn-lg">
+                    👤 Gestisci Profilo
                 </a>
             </div>
         </div>

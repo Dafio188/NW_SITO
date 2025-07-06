@@ -17,14 +17,24 @@ class EmailService {
     
     private function configureMailer() {
         try {
-            // Configurazione server SMTP
-            $this->mailer->isSMTP();
-            $this->mailer->Host = 'smtp.gmail.com'; // Cambia con il tuo SMTP
-            $this->mailer->SMTPAuth = true;
-            $this->mailer->Username = 'your-email@gmail.com'; // Cambia con la tua email
-            $this->mailer->Password = 'your-app-password'; // Cambia con la tua password app
-            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $this->mailer->Port = 587;
+            // Prova prima con SMTP se configurato
+            if ($this->isSmtpConfigured()) {
+                $this->mailer->isSMTP();
+                $this->mailer->Host = 'smtp.gmail.com'; // Cambia con il tuo SMTP
+                $this->mailer->SMTPAuth = true;
+                $this->mailer->Username = 'your-email@gmail.com'; // Cambia con la tua email
+                $this->mailer->Password = 'your-app-password'; // Cambia con la tua password app
+                $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $this->mailer->Port = 587;
+                
+                // Test connessione SMTP
+                $this->mailer->SMTPDebug = 0; // Disabilita debug
+                
+            } else {
+                // Fallback a PHP mail() se SMTP non configurato
+                $this->mailer->isMail();
+                error_log("EmailService: Usando PHP mail() come fallback");
+            }
             
             // Configurazione mittente
             $this->mailer->setFrom('noreply@astroguida.com', 'AstroGuida');
@@ -33,7 +43,35 @@ class EmailService {
             
         } catch (Exception $e) {
             error_log("Errore configurazione email: " . $e->getMessage());
+            // Fallback a PHP mail() in caso di errore
+            try {
+                $this->mailer->isMail();
+                $this->mailer->setFrom('noreply@astroguida.com', 'AstroGuida');
+                $this->mailer->isHTML(true);
+                $this->mailer->CharSet = 'UTF-8';
+                error_log("EmailService: Fallback a PHP mail() attivato");
+            } catch (Exception $e2) {
+                error_log("Errore anche con fallback mail(): " . $e2->getMessage());
+            }
         }
+    }
+    
+    /**
+     * Verifica se SMTP è configurato correttamente
+     */
+    private function isSmtpConfigured() {
+        // Verifica se le credenziali SMTP sono configurate
+        // In un ambiente reale, queste dovrebbero essere in un file di configurazione
+        $smtp_host = 'smtp.gmail.com';
+        $smtp_user = 'your-email@gmail.com';
+        $smtp_pass = 'your-app-password';
+        
+        // Se le credenziali sono ancora quelle di default, usa il fallback
+        if ($smtp_user === 'your-email@gmail.com' || $smtp_pass === 'your-app-password') {
+            return false;
+        }
+        
+        return true;
     }
     
     /**
