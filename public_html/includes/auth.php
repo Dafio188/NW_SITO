@@ -1,6 +1,5 @@
 <?php
 // Sistema autenticazione base AstroGuida
-session_start();
 
 class Auth {
     private $db;

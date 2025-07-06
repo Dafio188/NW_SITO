@@ -5,9 +5,7 @@ class Auth {
     private $db;
     public function __construct() {
         $this->db = getDb();
-        if(session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        // Sessione ora gestita centralmente in config.php
     }
     public function login($email, $password) {
         $stmt = $this->db->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');

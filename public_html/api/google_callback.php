@@ -1,7 +1,7 @@
 <?php
+require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/../includes/google_oauth_config.php';
 require_once __DIR__.'/../includes/auth.php';
-session_start();
 if (!isset($_GET['code'], $_GET['state']) || $_GET['state'] !== ($_SESSION['google_oauth_state'] ?? '')) {
     exit('Errore stato OAuth.');
 }
