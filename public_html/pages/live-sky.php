@@ -1,5 +1,17 @@
 <?php /* Live Sky AstroGuida */
 require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/streaming.php';
+
+// Ottieni dati streaming dinamici
+$streaming_url = $streamingManager->getStreamingUrl();
+$embed_url = $streamingManager->getEmbedUrl();
+$streaming_status = $streamingManager->getStreamingStatus();
+$streaming_settings = $streamingManager->getStreamingSettings();
+
+// Impostazioni streaming
+$streaming_title = $streaming_settings['streaming_title'] ?? 'Cielo di Cassano delle Murge';
+$streaming_description = $streaming_settings['streaming_description'] ?? 'Streaming live del cielo notturno';
+$streaming_location = $streaming_settings['streaming_location'] ?? 'Cassano delle Murge, Puglia';
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -271,9 +283,9 @@ require_once __DIR__ . '/../includes/config.php';
         <div class="live-container">
             <!-- Header -->
             <div class="live-header">
-                <div class="live-status">
+                <div class="live-status status-<?= $streaming_status['status'] ?>">
                     <div class="live-dot"></div>
-                    LIVE - Cielo di Cassano delle Murge
+                    <?= htmlspecialchars($streaming_status['message']) ?>
                 </div>
                 <h1 class="text-4xl font-bold text-white mb-4">
                     🌌 Streaming Live del Cielo
@@ -289,10 +301,10 @@ require_once __DIR__ . '/../includes/config.php';
                 <!-- Main Stream -->
                 <div class="stream-main">
                     <div class="stream-video">
-                        <!-- Placeholder per streaming YouTube -->
+                        <!-- Streaming YouTube Dinamico -->
                         <iframe 
-                            src="https://www.youtube.com/embed/live_stream?channel=UC_YOUR_CHANNEL_ID" 
-                            title="Live Sky Stream"
+                            src="<?= htmlspecialchars($embed_url) ?>" 
+                            title="<?= htmlspecialchars($streaming_title) ?>"
                             allowfullscreen>
                         </iframe>
                     </div>
