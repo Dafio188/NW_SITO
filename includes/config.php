@@ -2,6 +2,7 @@
 // Configurazione base AstroGuida
 
 define('SQLITE_PATH', __DIR__ . '/../data/astroguida.sqlite');
+define('DB_PATH', __DIR__ . '/../data/astroguida.sqlite'); // Alias per compatibilità
 
 define('BASE_URL', 'https://astroguida.com/');
 define('SITE_NAME', 'AstroGuida');

@@ -73,7 +73,7 @@ function getAuth() {
     static $auth = null;
     if ($auth === null) {
         require_once __DIR__.'/database.php';
-        $db = (new Database(DB_PATH))->pdo();
+        $db = getDb();
         $auth = new Auth($db);
     }
     return $auth;
