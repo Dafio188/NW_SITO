@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta property="og:type" content="website">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="icon" href="/assets/images/logo/astroguida-logo.jpg">
+    <link rel="icon" href="/favicon.jpg">
 </head>
 <body>
     <div class="stellar-background">
