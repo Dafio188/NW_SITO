@@ -38,7 +38,7 @@ if (file_exists($filepath)) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>404 - Pagina Non Trovata | AstroGuida</title>
         <link rel="stylesheet" href="/assets/css/main.css">
-        <link rel="icon" href="/favicon.ico">
+        <link rel="icon" href="/favicon.jpg">
     </head>
     <body>
         <div class="main-container">

@@ -8,7 +8,7 @@ require_once __DIR__ . '/../includes/config.php';
     <title>Servizi - AstroGuida</title>
     <meta name="description" content="Scopri tutti i servizi di AstroGuida: astrofotografia, turismo astronomico, osservazioni guidate e corsi di astronomia.">
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="icon" href="/favicon.ico">
+    <link rel="icon" href="/favicon.jpg">
 </head>
 <body>
     <div class="main-container">

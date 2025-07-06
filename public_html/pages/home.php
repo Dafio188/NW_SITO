@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="/assets/css/main.css">
     
     <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico">
+    <link rel="icon" href="/favicon.jpg">
     
     <!-- Open Graph -->
     <meta property="og:title" content="AstroGuida - Astrofotografia e Turismo Astronomico">
