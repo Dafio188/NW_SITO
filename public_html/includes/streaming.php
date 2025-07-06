@@ -205,8 +205,11 @@ class StreamingManager {
     }
 }
 
-// Inizializza il manager streaming
-if (isset($pdo)) {
+// Inizializza il manager streaming solo se il database è disponibile
+if (isset($pdo) && $pdo !== null) {
     $streamingManager = new StreamingManager($pdo);
+} else {
+    // Fallback per quando il database non è disponibile
+    $streamingManager = null;
 }
 ?> 

@@ -82,4 +82,68 @@ echo "<li><a href='/?page=live-sky' target='_blank'>Live Sky</a></li>";
 echo "</ul>";
 
 echo "<p><strong>Timestamp:</strong> " . date('Y-m-d H:i:s') . "</p>";
+
+// Test per verificare che le pagine problematiche ora funzionino
+echo "=== TEST CORREZIONE PAGINE ===\n\n";
+
+// Disabilita output degli errori per il test
+error_reporting(0);
+
+$pages_to_test = [
+    'gallery' => 'Gallery',
+    'about' => 'Chi Siamo',
+    'contact' => 'Contatti'
+];
+
+foreach ($pages_to_test as $page => $title) {
+    echo "Testing $title ($page)...\n";
+    
+    // Pulisce il buffer di output
+    ob_clean();
+    ob_start();
+    
+    try {
+        // Simula la richiesta GET
+        $_GET['page'] = $page;
+        
+        // Testa l'include della pagina
+        include __DIR__ . "/pages/$page.php";
+        
+        $output = ob_get_contents();
+        
+        if (strlen($output) > 1000) {
+            echo "✅ OK: $title caricata correttamente (" . strlen($output) . " caratteri)\n";
+        } else {
+            echo "❌ ERRORE: $title output troppo breve\n";
+        }
+        
+    } catch (Exception $e) {
+        echo "❌ ERRORE: " . $e->getMessage() . "\n";
+    } catch (Error $e) {
+        echo "❌ ERRORE FATALE: " . $e->getMessage() . "\n";
+    }
+    
+    ob_end_clean();
+    echo "\n";
+}
+
+// Test configurazione database
+echo "Testing configurazione database...\n";
+require_once __DIR__ . '/includes/config.php';
+
+if (isset($pdo) && $pdo !== null) {
+    echo "✅ OK: Database PDO inizializzato correttamente\n";
+} else {
+    echo "❌ ERRORE: Database PDO non disponibile\n";
+}
+
+// Test streaming manager
+require_once __DIR__ . '/includes/streaming.php';
+if (isset($streamingManager) && $streamingManager !== null) {
+    echo "✅ OK: StreamingManager inizializzato correttamente\n";
+} else {
+    echo "⚠️ WARNING: StreamingManager non disponibile (fallback attivo)\n";
+}
+
+echo "\n=== FINE TEST ===\n";
 ?> 

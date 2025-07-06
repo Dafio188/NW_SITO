@@ -2,16 +2,26 @@
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/streaming.php';
 
-// Ottieni dati streaming dinamici
-$streaming_url = $streamingManager->getStreamingUrl();
-$embed_url = $streamingManager->getEmbedUrl();
-$streaming_status = $streamingManager->getStreamingStatus();
-$streaming_settings = $streamingManager->getStreamingSettings();
-
-// Impostazioni streaming
-$streaming_title = $streaming_settings['streaming_title'] ?? 'Cielo di Cassano delle Murge';
-$streaming_description = $streaming_settings['streaming_description'] ?? 'Streaming live del cielo notturno';
-$streaming_location = $streaming_settings['streaming_location'] ?? 'Cassano delle Murge, Puglia';
+// Ottieni dati streaming dinamici con fallback
+if ($streamingManager) {
+    $streaming_url = $streamingManager->getStreamingUrl();
+    $embed_url = $streamingManager->getEmbedUrl();
+    $streaming_status = $streamingManager->getStreamingStatus();
+    $streaming_settings = $streamingManager->getStreamingSettings();
+    
+    // Impostazioni streaming
+    $streaming_title = $streaming_settings['streaming_title'] ?? 'Cielo di Cassano delle Murge';
+    $streaming_description = $streaming_settings['streaming_description'] ?? 'Streaming live del cielo notturno';
+    $streaming_location = $streaming_settings['streaming_location'] ?? 'Cassano delle Murge, Puglia';
+} else {
+    // Fallback quando il database non è disponibile
+    $streaming_url = 'https://youtube.com/live/54O7rq5ZweY';
+    $embed_url = 'https://www.youtube.com/embed/54O7rq5ZweY?autoplay=1&mute=1';
+    $streaming_status = ['status' => 'offline', 'message' => 'Streaming offline - Lavori in corso'];
+    $streaming_title = 'Cielo di Cassano delle Murge';
+    $streaming_description = 'Streaming live del cielo notturno';
+    $streaming_location = 'Cassano delle Murge, Puglia';
+}
 ?>
 <!DOCTYPE html>
 <html lang="it">
