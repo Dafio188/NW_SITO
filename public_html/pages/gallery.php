@@ -165,32 +165,7 @@ $categories = [
 
     <div class="main-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo" class="logo-image">
-                    <span class="logo-text">AstroGuida</span>
-                </div>
-                
-                <nav class="nav">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/?page=services" class="nav-link">Servizi</a>
-                    <a href="/?page=gallery" class="nav-link active">Gallery</a>
-                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
-                    <a href="/?page=contact" class="nav-link">Contatti</a>
-                    <a href="/?page=live-sky" class="nav-link">🔴 Live</a>
-                </nav>
-
-                <div class="header-actions">
-                    <a href="/?page=booking" class="btn btn-primary btn-sm">
-                        🚀 Prenota
-                    </a>
-                    <a href="/?page=login" class="btn btn-ghost btn-sm">
-                        👤 Login
-                    </a>
-                </div>
-            </div>
-        </header>
+        <?php include __DIR__ . '/../includes/header.php'; ?>
 
         <!-- Hero Section -->
         <section class="hero-section">
