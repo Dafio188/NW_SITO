@@ -257,37 +257,10 @@ if ($streamingManager) {
 <body>
     <div class="main-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <div class="logo-icon">
-                        <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo">
-                    </div>
-                    <span>AstroGuida</span>
-                </a>
-                
-                <nav class="nav-main">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/?page=services" class="nav-link">Servizi</a>
-                    <a href="/?page=gallery" class="nav-link">Gallery</a>
-                    <a href="/?page=live-sky" class="nav-link active">Live Sky</a>
-                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
-                    <a href="/?page=contact" class="nav-link">Contatti</a>
-                </nav>
-                
-                <div class="user-menu">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <a href="/?page=dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
-                        <div class="user-avatar" title="<?= htmlspecialchars($_SESSION['user_name']) ?>">
-                            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
-                        </div>
-                    <?php else: ?>
-                        <a href="/?page=login" class="btn btn-ghost btn-sm">Accedi</a>
-                        <a href="/?page=register" class="btn btn-primary btn-sm">Registrati</a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </header>
+        <?php 
+        $current_page = 'live-sky';
+        include __DIR__ . '/../includes/header.php'; 
+        ?>
 
         <!-- Main Content -->
         <div class="live-container">

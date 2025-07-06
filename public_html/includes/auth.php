@@ -22,6 +22,7 @@ class Auth {
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_role'] = $user['role'];
+            $_SESSION['user_name'] = $user['name'];
             return true;
         }
         return false;
@@ -50,6 +51,12 @@ class Auth {
         }
         return null;
     }
+    
+    // Alias per compatibilità
+    public function currentUser() {
+        return $this->user();
+    }
+    
     public function requireLogin() {
         if (!$this->isLogged()) {
             header('Location: /login');

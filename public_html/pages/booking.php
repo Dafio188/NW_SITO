@@ -1,40 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/config.php';
 
-// Gestione invio prenotazione
-$success_message = '';
-$error_message = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $service = trim($_POST['service'] ?? '');
-    $date = trim($_POST['date'] ?? '');
-    $time = trim($_POST['time'] ?? '');
-    $participants = (int)($_POST['participants'] ?? 1);
-    $message = trim($_POST['message'] ?? '');
-    
-    // Validazione
-    if (empty($name) || empty($email) || empty($service) || empty($date)) {
-        $error_message = 'Tutti i campi obbligatori devono essere compilati.';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error_message = 'Indirizzo email non valido.';
-    } elseif ($participants < 1 || $participants > 8) {
-        $error_message = 'Il numero di partecipanti deve essere tra 1 e 8.';
-    } else {
-        // Simulazione salvataggio prenotazione
-        $booking_id = 'AG' . date('Ymd') . rand(1000, 9999);
-        
-        // In produzione: salvare nel database e inviare email
-        $success_message = "Prenotazione inviata con successo! Codice prenotazione: $booking_id. Ti contatteremo entro 24 ore per la conferma.";
-        
-        // Reset form
-        $_POST = [];
-    }
-}
-
-// Servizi disponibili
+// Servizi disponibili - DEFINITI PRIMA DEL CONTROLLO POST
 $services = [
     'osservazione' => [
         'name' => 'Osservazione Guidata',
@@ -83,7 +50,137 @@ $time_slots = [
         '01:00' => 'Notte fonda (01:00)'
     ]
 ];
-?><!DOCTYPE html>
+
+// Gestione invio prenotazione
+$success_message = '';
+$error_message = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $service = trim($_POST['service'] ?? '');
+    $date = trim($_POST['date'] ?? '');
+    $time = trim($_POST['time'] ?? '');
+    $participants = (int)($_POST['participants'] ?? 1);
+    $message = trim($_POST['message'] ?? '');
+    
+    // Validazione
+    if (empty($name) || empty($email) || empty($service) || empty($date)) {
+        $error_message = 'Tutti i campi obbligatori devono essere compilati.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = 'Indirizzo email non valido.';
+    } elseif ($participants < 1 || $participants > 8) {
+        $error_message = 'Il numero di partecipanti deve essere tra 1 e 8.';
+    } else {
+        // Salvataggio prenotazione nel database
+        try {
+            require_once __DIR__ . '/../includes/database.php';
+            require_once __DIR__ . '/../includes/auth.php';
+            
+            $db = getDb();
+            $auth = getAuth();
+            
+            // Genera ID prenotazione unico
+            $booking_id = 'AG' . date('Ymd') . rand(1000, 9999);
+            
+            // Determina user_id se utente loggato
+            $user_id = null;
+            if ($auth->isLogged()) {
+                $user = $auth->user();
+                $user_id = $user['id'] ?? null;
+            }
+            
+            // Calcola prezzo totale
+            $service_price = $services[$service]['price'] ?? 50;
+            $total_amount = $service_price * $participants;
+            
+            // Verifica se la tabella ha la colonna booking_id
+            $columns = $db->query("PRAGMA table_info(bookings)")->fetchAll();
+            $has_booking_id = false;
+            $has_total_amount = false;
+            foreach ($columns as $col) {
+                if ($col['name'] === 'booking_id') $has_booking_id = true;
+                if ($col['name'] === 'total_amount') $has_total_amount = true;
+            }
+            
+            if ($has_booking_id && $has_total_amount) {
+                // Nuova struttura completa
+                $stmt = $db->prepare("
+                    INSERT INTO bookings (
+                        booking_id, user_id, name, email, phone, service_name, 
+                        booking_date, booking_time, participants, message, status, total_amount
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+                ");
+                
+                $service_name = $services[$service]['name'] ?? $service;
+                
+                $stmt->execute([
+                    $booking_id, $user_id, $name, $email, $phone, 
+                    $service_name, $date, $time, $participants, $message, $total_amount
+                ]);
+            } else {
+                // Struttura vecchia - adatta i campi
+                $contact_info = json_encode([
+                    'name' => $name,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'participants' => $participants,
+                    'message' => $message,
+                    'time' => $time
+                ]);
+                
+                $stmt = $db->prepare("
+                    INSERT INTO bookings (
+                        user_id, service_name, booking_date, contact_info, status
+                    ) VALUES (?, ?, ?, ?, 'pending')
+                ");
+                
+                $stmt->execute([
+                    $user_id, $service_name, $date, $contact_info
+                ]);
+                
+                // Genera booking_id basato sull'ID inserito
+                $booking_id = 'AG' . date('Ymd') . str_pad($db->lastInsertId(), 4, '0', STR_PAD_LEFT);
+            }
+            
+            $success_message = "Prenotazione salvata! Codice: $booking_id";
+            $success_booking_id = $booking_id;
+            $success_amount = $total_amount;
+            $success_service = $service;
+            
+            // Invio email di conferma prenotazione
+            try {
+                require_once __DIR__ . '/../includes/email_service.php';
+                $emailService = getEmailService();
+                
+                $bookingDetails = [
+                    'booking_id' => $booking_id,
+                    'service_name' => $service_name,
+                    'booking_date' => $date,
+                    'booking_time' => $time,
+                    'participants' => $participants,
+                    'total_amount' => $total_amount
+                ];
+                
+                $emailService->sendBookingConfirmation($email, $name, $bookingDetails);
+                
+            } catch (Exception $e) {
+                error_log("Errore invio email prenotazione: " . $e->getMessage());
+                // Non bloccare il processo se l'email fallisce
+            }
+            
+            // Reset form
+            $_POST = [];
+            
+        } catch (Exception $e) {
+            $error_message = "Errore nel salvataggio della prenotazione: " . $e->getMessage();
+            error_log("Errore prenotazione: " . $e->getMessage());
+        }
+    }
+}
+?>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -100,7 +197,239 @@ $time_slots = [
     <meta property="og:type" content="website">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="icon" href="/assets/images/logo/astroguida-logo.jpg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    
+    <!-- CSS Personalizzato per Form Booking -->
+    <style>
+        /* Miglioramenti UI Form Booking */
+        .custom-select-wrapper {
+            position: relative;
+            display: block;
+        }
+        
+        .form-select-modern {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 1rem 3rem 1rem 1rem;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-select-modern:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-select-modern:hover {
+            border-color: rgba(100, 255, 218, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .select-arrow {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64ffda;
+            pointer-events: none;
+            font-size: 0.8rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .custom-select-wrapper:hover .select-arrow {
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        /* Miglioramento Select Servizio */
+        .form-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 1rem 3rem 1rem 1rem;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364ffda' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 1rem center;
+            background-repeat: no-repeat;
+            background-size: 1rem;
+        }
+        
+        /* FIX CRITICO: Opzioni dropdown visibili */
+        .form-select option {
+            background: #1a1a2e !important;
+            color: white !important;
+            padding: 0.5rem !important;
+        }
+        
+        .form-select optgroup {
+            background: #0f3460 !important;
+            color: #64ffda !important;
+            font-weight: bold !important;
+        }
+        
+        .form-select-modern option {
+            background: #1a1a2e !important;
+            color: white !important;
+            padding: 0.5rem !important;
+        }
+        
+        .form-select-modern optgroup {
+            background: #0f3460 !important;
+            color: #64ffda !important;
+            font-weight: bold !important;
+        }
+        
+        .form-select:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-select:hover {
+            border-color: rgba(100, 255, 218, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* Miglioramento Textarea */
+        .form-textarea {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            resize: vertical;
+            min-height: 120px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-family: inherit;
+        }
+        
+        .form-textarea:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-textarea:hover {
+            border-color: rgba(100, 255, 218, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+        
+        /* Miglioramento Input */
+        .form-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(100, 255, 218, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 0 3px rgba(100, 255, 218, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-input:hover {
+            border-color: rgba(100, 255, 218, 0.5);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Label migliorati */
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #64ffda;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Card migliorati */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(100, 255, 218, 0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            border-color: rgba(100, 255, 218, 0.4);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        /* Animazioni */
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(100, 255, 218, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(100, 255, 218, 0.8); }
+        }
+        
+        .stellar-glow:hover {
+            animation: glow 2s infinite;
+        }
+        
+        /* Responsive miglioramenti */
+        @media (max-width: 768px) {
+            .form-select-modern, .form-select, .form-input, .form-textarea {
+                font-size: 16px; /* Previene zoom su iOS */
+            }
+        }
+        
+        /* Card PayPal migliorata */
+        .paypal-card {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.1), rgba(0, 122, 255, 0.1));
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .paypal-card:hover {
+            border-color: rgba(100, 255, 218, 0.5);
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.15), rgba(0, 122, 255, 0.15));
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body>
     <div class="stellar-background">
@@ -111,32 +440,7 @@ $time_slots = [
 
     <div class="main-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo" class="logo-image">
-                    <span class="logo-text">AstroGuida</span>
-                </div>
-                
-                <nav class="nav">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/?page=services" class="nav-link">Servizi</a>
-                    <a href="/?page=gallery" class="nav-link">Gallery</a>
-                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
-                    <a href="/?page=contact" class="nav-link">Contatti</a>
-                    <a href="/?page=live-sky" class="nav-link">🔴 Live</a>
-                </nav>
-
-                <div class="header-actions">
-                    <a href="/?page=booking" class="btn btn-primary btn-sm active">
-                        🚀 Prenota
-                    </a>
-                    <a href="/?page=login" class="btn btn-ghost btn-sm">
-                        👤 Login
-                    </a>
-                </div>
-            </div>
-        </header>
+        <?php include __DIR__ . '/../includes/header.php'; ?>
 
         <!-- Hero Section -->
         <section class="hero-section">
@@ -159,6 +463,22 @@ $time_slots = [
                 <div class="container">
                     <div class="alert alert-success max-w-2xl mx-auto">
                         ✅ <?= htmlspecialchars($success_message) ?>
+                        
+                        <?php if (isset($success_booking_id) && isset($success_amount)): ?>
+                            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                                <h4 style="margin-bottom: 1rem; color: #64ffda;">💳 Completa il Pagamento</h4>
+                                <p style="margin-bottom: 1rem;">Per confermare la prenotazione, effettua il pagamento sicuro tramite PayPal:</p>
+                                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                    <a href="/paypal-payment.php?booking_id=<?= urlencode($success_booking_id) ?>&amount=<?= $success_amount ?>&service=<?= urlencode($success_service) ?>" 
+                                       style="background: #0070ba; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        🛡️ Paga €<?= number_format($success_amount, 2) ?> con PayPal
+                                    </a>
+                                    <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem; align-self: center;">
+                                        Pagamento sicuro • La prenotazione sarà confermata dopo il pagamento
+                                    </span>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </section>
@@ -174,30 +494,33 @@ $time_slots = [
             </section>
         <?php endif; ?>
 
-        <!-- Selezione Servizio -->
+        <!-- Calendario Disponibilità -->
         <section class="section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Scegli il Tuo Servizio</h2>
+                    <h2 class="section-title">📅 Controlla Disponibilità</h2>
                     <p class="section-subtitle">
-                        Seleziona l'esperienza che preferisci
+                        Visualizza le date disponibili e scegli quella perfetta per te
                     </p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <?php foreach ($services as $key => $service): ?>
-                        <div class="service-card" data-service="<?= $key ?>">
-                            <div class="service-icon"><?= $service['icon'] ?></div>
-                            <h3 class="service-title"><?= $service['name'] ?></h3>
-                            <div class="service-price">€<?= $service['price'] ?></div>
-                            <div class="service-duration"><?= $service['duration'] ?></div>
-                            <p class="service-description"><?= $service['description'] ?></p>
-                            <div class="service-participants">
-                                Max <?= $service['max_participants'] ?> persone
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                <div id="booking-calendar" class="mb-8">
+                    <?php
+                    require_once __DIR__ . '/../includes/booking_calendar.php';
+                    $calendar = getBookingCalendar();
+                    
+                    // Mostra CSS
+                    echo $calendar->getCalendarCSS();
+                    
+                    // Mostra calendario per mese corrente
+                    echo $calendar->generateCalendarHTML(date('Y'), date('n'));
+                    
+                    // Mostra JavaScript
+                    echo $calendar->getCalendarJS();
+                    ?>
                 </div>
+                
+                <div id="availability-info" class="mb-6"></div>
             </div>
         </section>
 
@@ -244,13 +567,16 @@ $time_slots = [
                                     
                                     <div>
                                         <label for="participants" class="form-label">Numero Partecipanti *</label>
-                                        <select id="participants" name="participants" class="form-select" required>
-                                            <?php for ($i = 1; $i <= 8; $i++): ?>
-                                                <option value="<?= $i ?>" <?= ($_POST['participants'] ?? 1) == $i ? 'selected' : '' ?>>
-                                                    <?= $i ?> <?= $i === 1 ? 'persona' : 'persone' ?>
-                                                </option>
-                                            <?php endfor; ?>
-                                        </select>
+                                        <div class="custom-select-wrapper">
+                                            <select id="participants" name="participants" class="form-select-modern" required>
+                                                <?php for ($i = 1; $i <= 8; $i++): ?>
+                                                    <option value="<?= $i ?>" <?= ($_POST['participants'] ?? 1) == $i ? 'selected' : '' ?>>
+                                                        <?= $i ?> <?= $i === 1 ? 'persona' : 'persone' ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                            <div class="select-arrow">▼</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -339,7 +665,7 @@ $time_slots = [
                                 </div>
                             </div>
                             
-                            <div class="mt-6 p-4 bg-gradient-primary rounded-lg">
+                            <div class="mt-6 p-4 paypal-card">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <h4 class="font-semibold text-white">💳 Modalità di Pagamento</h4>
@@ -618,106 +944,5 @@ $time_slots = [
             }
         }
     </script>
-    
-    <style>
-        /* Stili Sistema Prenotazioni */
-        .service-card {
-            background: rgba(42, 42, 42, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .service-card:hover {
-            border-color: rgba(100, 255, 218, 0.5);
-            transform: translateY(-2px);
-        }
-        
-        .service-card.selected {
-            border-color: #64ffda;
-            background: rgba(100, 255, 218, 0.1);
-        }
-        
-        .service-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .service-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 0.5rem;
-        }
-        
-        .service-price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #64ffda;
-            margin-bottom: 0.5rem;
-        }
-        
-        .service-duration {
-            color: #a855f7;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-        
-        .service-description {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-        
-        .service-participants {
-            color: #f59e0b;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .booking-form .card {
-            background: rgba(26, 26, 26, 0.9);
-            backdrop-filter: blur(15px);
-        }
-        
-        .summary-item {
-            text-align: center;
-        }
-        
-        .summary-label {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .summary-value {
-            color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .service-card {
-                padding: 1rem;
-            }
-            
-            .service-icon {
-                font-size: 2rem;
-            }
-            
-            .service-title {
-                font-size: 1rem;
-            }
-            
-            .service-price {
-                font-size: 1.3rem;
-            }
-        }
-    </style>
 </body>
 </html> 

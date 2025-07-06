@@ -1,5 +1,30 @@
 <?php
 require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/auth.php';
+
+$auth = getAuth();
+$is_logged = $auth->isLogged();
+
+// Funzione per generare URL prenotazione
+function getBookingUrl($service) {
+    global $is_logged;
+    if ($is_logged) {
+        return "/?page=booking&service={$service}";
+    } else {
+        return "/?page=login&redirect=" . urlencode("/?page=booking&service={$service}");
+    }
+}
+
+// Funzione per generare testo pulsante
+function getBookingButtonText($service, $action) {
+    global $is_logged;
+    if ($is_logged) {
+        return $action;
+    } else {
+        return "🔐 Accedi per " . strtolower($action);
+    }
+}
+
 ?><!DOCTYPE html>
 <html lang="it">
 <head>
@@ -13,37 +38,10 @@ require_once __DIR__ . '/../includes/config.php';
 <body>
     <div class="main-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <div class="logo-icon">
-                        <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo">
-                    </div>
-                    <span>AstroGuida</span>
-                </a>
-                
-                <nav class="nav-main">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/?page=services" class="nav-link active">Servizi</a>
-                    <a href="/?page=gallery" class="nav-link">Gallery</a>
-                    <a href="/?page=live-sky" class="nav-link">Live Sky</a>
-                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
-                    <a href="/?page=contact" class="nav-link">Contatti</a>
-                </nav>
-                
-                <div class="user-menu">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <a href="/?page=dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
-                        <div class="user-avatar" title="<?= htmlspecialchars($_SESSION['user_name']) ?>">
-                            <?= strtoupper(substr($_SESSION['user_name'], 0, 1)) ?>
-                        </div>
-                    <?php else: ?>
-                        <a href="/?page=login" class="btn btn-ghost btn-sm">Accedi</a>
-                        <a href="/?page=register" class="btn btn-primary btn-sm">Registrati</a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </header>
+        <?php 
+        $current_page = 'services';
+        include __DIR__ . '/../includes/header.php'; 
+        ?>
 
         <!-- Hero Section -->
         <section class="hero">
@@ -91,8 +89,8 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">per sessione</span>
                             </div>
                             
-                            <a href="/?page=booking&service=astrofotografia" class="btn btn-primary btn-lg">
-                                📸 Prenota Sessione
+                            <a href="<?= getBookingUrl('astrofotografia') ?>" class="btn btn-primary btn-lg">
+                                <?= getBookingButtonText('astrofotografia', '📸 Prenota Sessione') ?>
                             </a>
                         </div>
                         
@@ -150,8 +148,8 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">per persona</span>
                             </div>
                             
-                            <a href="/?page=booking&service=turismo" class="btn btn-primary btn-lg">
-                                🌌 Prenota Tour
+                            <a href="<?= getBookingUrl('turismo') ?>" class="btn btn-primary btn-lg">
+                                <?= getBookingButtonText('turismo', '🌌 Prenota Tour') ?>
                             </a>
                         </div>
                     </div>
@@ -198,8 +196,8 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">per persona</span>
                             </div>
                             
-                            <a href="/?page=booking&service=osservazione" class="btn btn-primary btn-lg">
-                                🔭 Prenota Osservazione
+                            <a href="<?= getBookingUrl('osservazione') ?>" class="btn btn-primary btn-lg">
+                                <?= getBookingButtonText('osservazione', '🔭 Prenota Osservazione') ?>
                             </a>
                         </div>
                         
@@ -253,8 +251,8 @@ require_once __DIR__ . '/../includes/config.php';
                                 <span class="text-silver">corso completo</span>
                             </div>
                             
-                            <a href="/?page=booking&service=corsi" class="btn btn-primary btn-lg">
-                                🎓 Iscriviti al Corso
+                            <a href="<?= getBookingUrl('corsi') ?>" class="btn btn-primary btn-lg">
+                                <?= getBookingButtonText('corsi', '🎓 Iscriviti al Corso') ?>
                             </a>
                         </div>
                     </div>
@@ -271,8 +269,8 @@ require_once __DIR__ . '/../includes/config.php';
                         Prenota il tuo servizio preferito e inizia il tuo viaggio tra le stelle
                     </p>
                     <div class="flex gap-4 justify-center flex-wrap">
-                        <a href="/?page=booking" class="btn btn-primary btn-lg">
-                            🚀 Prenota Ora
+                        <a href="<?= $is_logged ? '/?page=booking' : '/?page=login&redirect=' . urlencode('/?page=booking') ?>" class="btn btn-primary btn-lg">
+                            <?= $is_logged ? '🚀 Prenota Ora' : '🔐 Accedi per Prenotare' ?>
                         </a>
                         <a href="/?page=contact" class="btn btn-secondary btn-lg">
                             💬 Contattaci

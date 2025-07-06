@@ -8,7 +8,13 @@ $user = $auth->user();
 if (!is_array($user)) {
     // Se non è un array, prova a ricreare la sessione
     session_destroy();
-    header('Location: /login');
+    header('Location: /?page=login');
+    exit();
+}
+
+// REINDIRIZZAMENTO ADMIN: Se è admin, porta alla dashboard admin
+if (($user['role'] ?? '') === 'admin') {
+    header('Location: /?page=admin_dashboard');
     exit();
 }
 
@@ -40,12 +46,12 @@ $userEmail = isset($user['email']) ? $user['email'] : 'Email non disponibile';
         <ul>
             <li>Nessuna prenotazione trovata (demo)</li>
         </ul>
-        <a class="btn btn-primary" href="/booking">Prenota un nuovo servizio</a>
+        <a class="btn btn-primary" href="/?page=booking">Prenota un nuovo servizio</a>
     </div>
     <div class="card" style="margin-top:24px;">
         <h2>Profilo</h2>
         <p>Email: <?= htmlspecialchars($userEmail) ?></p>
-        <a href="/logout">Logout</a>
+        <a href="/?page=logout">Logout</a>
     </div>
 </section>
 

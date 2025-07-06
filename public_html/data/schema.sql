@@ -21,16 +21,25 @@ CREATE TABLE IF NOT EXISTS gallery_images (
     file_size INTEGER,
     is_featured INTEGER DEFAULT 0
 );
--- bookings
+-- bookings SCHEMA COMPLETO
 CREATE TABLE IF NOT EXISTS bookings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    booking_id TEXT UNIQUE NOT NULL,
     user_id INTEGER,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
     service_name TEXT NOT NULL,
-    booking_date DATE NOT NULL,
-    contact_info TEXT,
+    booking_date TEXT NOT NULL,
+    booking_time TEXT,
+    participants INTEGER DEFAULT 1,
+    message TEXT,
     status TEXT DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    payment_status TEXT DEFAULT 'pending',
+    transaction_id TEXT,
+    total_amount REAL,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 -- settings
 CREATE TABLE IF NOT EXISTS settings (

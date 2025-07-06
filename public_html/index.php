@@ -14,9 +14,12 @@ error_reporting(E_ALL);
 // Routing delle pagine
 $page = $_GET['page'] ?? 'home';
 $allowed = [
-    'home', 'gallery', 'booking', 'login', 'register', 'dashboard', 'admin',
+    'home', 'gallery', 'booking', 'login', 'register', 'dashboard', 'admin', 'admin_dashboard',
     'services', 'live-sky', 'about', 'contact', 'faq', 'privacy', 'terms',
-    'reset_password', 'new_password', 'logout'
+    'reset_password', 'new_password', 'logout',
+    // Pagine Admin
+    'admin_bookings', 'admin_gallery', 'admin_services', 'admin_contacts',
+    'user_bookings'
 ];
 
 if (!in_array($page, $allowed)) {

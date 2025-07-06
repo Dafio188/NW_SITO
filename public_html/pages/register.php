@@ -24,7 +24,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (strlen($password) < 6) {
             $error = 'La password deve essere di almeno 6 caratteri.';
         } elseif ($auth->register($name, $email, $password)) {
+            // Registrazione riuscita
             $success = true;
+            $success_message = "Registrazione completata con successo! Ora puoi accedere.";
+            
+            // Invio email di benvenuto
+            try {
+                require_once __DIR__ . '/../includes/email_service.php';
+                $emailService = getEmailService();
+                $emailService->sendRegistrationConfirmation($email, $name);
+                
+                $success_message .= " Ti abbiamo inviato un'email di benvenuto.";
+                
+            } catch (Exception $e) {
+                error_log("Errore invio email registrazione: " . $e->getMessage());
+                // Non bloccare la registrazione se l'email fallisce
+            }
+            
+            // Reset form
+            $_POST = [];
         } else {
             $error = 'Email già registrata o errore durante la registrazione.';
         }
@@ -54,30 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="main-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <div class="logo-icon">
-                        <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo">
-                    </div>
-                    <span>AstroGuida</span>
-                </a>
-                
-                <nav class="nav-main">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/?page=services" class="nav-link">Servizi</a>
-                    <a href="/?page=gallery" class="nav-link">Gallery</a>
-                    <a href="/?page=live-sky" class="nav-link">Live Sky</a>
-                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
-                    <a href="/?page=contact" class="nav-link">Contatti</a>
-                </nav>
-                
-                <div class="user-menu">
-                    <a href="/?page=login" class="btn btn-ghost btn-sm">Accedi</a>
-                    <a href="/?page=register" class="btn btn-primary btn-sm">Registrati</a>
-                </div>
-            </div>
-        </header>
+        <?php 
+        $current_page = 'register';
+        include __DIR__ . '/../includes/header.php'; 
+        ?>
 
         <!-- Main Content -->
         <div class="auth-container">
@@ -104,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     Registrazione Completata!
                                 </div>
                                 <div class="alert alert-success mb-6">
-                                    ✅ Account creato con successo! Ora puoi accedere.
+                                    ✅ <?= htmlspecialchars($success_message) ?>
                                 </div>
                                 <div class="flex gap-4 justify-center">
                                     <a href="/?page=login" class="btn btn-primary">

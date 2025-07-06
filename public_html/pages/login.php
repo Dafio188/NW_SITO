@@ -13,11 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
+        // Gestione redirect dopo login
+        $redirect_url = $_GET['redirect'] ?? '/?page=dashboard';
+        
         if ($auth->login($email, $password)) {
-            header('Location: /?page=dashboard');
+            header('Location: ' . $redirect_url);
             exit;
         } else {
-            $error = 'Email o password errati.';
+            $error = 'Credenziali non valide';
         }
     }
 }
@@ -45,30 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="main-container">
         <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <a href="/" class="logo">
-                    <div class="logo-icon">
-                        <img src="/assets/images/logo/astroguida-logo.jpg" alt="AstroGuida Logo">
-                    </div>
-                    <span>AstroGuida</span>
-                </a>
-                
-                <nav class="nav-main">
-                    <a href="/" class="nav-link">Home</a>
-                    <a href="/?page=services" class="nav-link">Servizi</a>
-                    <a href="/?page=gallery" class="nav-link">Gallery</a>
-                    <a href="/?page=live-sky" class="nav-link">Live Sky</a>
-                    <a href="/?page=about" class="nav-link">Chi Siamo</a>
-                    <a href="/?page=contact" class="nav-link">Contatti</a>
-                </nav>
-                
-                <div class="user-menu">
-                    <a href="/?page=login" class="btn btn-primary btn-sm">Accedi</a>
-                    <a href="/?page=register" class="btn btn-ghost btn-sm">Registrati</a>
-                </div>
-            </div>
-        </header>
+        <?php 
+        $current_page = 'login';
+        include __DIR__ . '/../includes/header.php'; 
+        ?>
 
         <!-- Main Content -->
         <div class="auth-container">
