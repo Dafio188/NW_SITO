@@ -249,8 +249,8 @@ img[loading="lazy"].loaded {
 }
 
 .logo-icon {
-    width: 40px;
-    height: 40px;
+    width: 70px;
+    height: 70px;
     margin-right: var(--space-3);
     border-radius: 8px;
     overflow: hidden;
@@ -268,8 +268,8 @@ img[loading="lazy"].loaded {
 }
 
 .footer-section .logo-icon {
-    width: 32px;
-    height: 32px;
+    width: 90px;
+    height: 90px;
 }
 
 .nav-main {

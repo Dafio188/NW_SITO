@@ -10,6 +10,7 @@ define('SQLITE_PATH', __DIR__ . '/../data/astroguida.sqlite');
 define('DB_PATH', __DIR__ . '/../data/astroguida.sqlite'); // Alias per compatibilità
 
 define('BASE_URL', 'https://astroguida.com/');
+define('SITE_URL', 'https://astroguida.com'); // Senza slash finale per compatibilità
 define('SITE_NAME', 'AstroGuida');
 define('SITE_EMAIL', 'info@astroguida.com');
 
