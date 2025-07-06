@@ -1,6 +1,11 @@
 <?php
 // Configurazione base AstroGuida
 
+// Avvia la sessione se non è già avviata
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 define('SQLITE_PATH', __DIR__ . '/../data/astroguida.sqlite');
 define('DB_PATH', __DIR__ . '/../data/astroguida.sqlite'); // Alias per compatibilità
 
