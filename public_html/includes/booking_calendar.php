@@ -394,22 +394,59 @@ class BookingCalendar {
                 currentYear--;
             }
             
+            console.log('Cambio mese a:', currentYear, currentMonth);
             loadCalendar(currentYear, currentMonth);
         }
         
         function loadCalendar(year, month) {
-            fetch('/?page=booking&ajax=calendar&year=' + year + '&month=' + month)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('booking-calendar').innerHTML = html;
+            // Mostra loading
+            const calendarContainer = document.getElementById('booking-calendar');
+            if (calendarContainer) {
+                calendarContainer.innerHTML = '<div style=\"text-align: center; padding: 2rem; color: #64ffda;\"><div style=\"font-size: 2rem; margin-bottom: 1rem;\">🔄</div><p>Caricamento calendario...</p></div>';
+            }
+            
+            // Crea URL per AJAX
+            const url = window.location.pathname + '?page=booking&ajax=calendar&year=' + year + '&month=' + month;
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore di rete: ' + response.status);
+                }
+                return response.text();
+            })
+            .then(html => {
+                if (calendarContainer) {
+                    calendarContainer.innerHTML = html;
                     attachCalendarEvents();
-                })
-                .catch(error => {
-                    console.error('Errore caricamento calendario:', error);
-                });
+                }
+            })
+            .catch(error => {
+                console.error('Errore caricamento calendario:', error);
+                if (calendarContainer) {
+                    calendarContainer.innerHTML = '<div style=\"text-align: center; padding: 2rem; color: #dc3545;\"><div style=\"font-size: 2rem; margin-bottom: 1rem;\">❌</div><p>Errore caricamento calendario. Riprova.</p><button onclick=\"location.reload()\" style=\"background: #007aff; color: white; padding: 0.5rem 1rem; border: none; border-radius: 5px; cursor: pointer; margin-top: 1rem;\">Ricarica</button></div>';
+                }
+            });
         }
         
         function attachCalendarEvents() {
+            // Riattacca eventi ai pulsanti di navigazione
+            const prevBtn = document.querySelector('.calendar-nav:first-child');
+            const nextBtn = document.querySelector('.calendar-nav:last-child');
+            
+            if (prevBtn) {
+                prevBtn.onclick = function() { changeMonth(-1); };
+            }
+            if (nextBtn) {
+                nextBtn.onclick = function() { changeMonth(1); };
+            }
+            
+            // Riattacca eventi ai giorni
             document.querySelectorAll('.calendar-day[data-date]').forEach(day => {
                 day.addEventListener('click', function() {
                     const date = this.dataset.date;
@@ -436,6 +473,12 @@ class BookingCalendar {
                         
                         // Mostra info disponibilità
                         showAvailabilityInfo(date, availability);
+                        
+                        // Scroll al form
+                        const formSection = document.getElementById('booking-form');
+                        if (formSection) {
+                            formSection.scrollIntoView({ behavior: 'smooth' });
+                        }
                     }
                 });
             });
@@ -463,13 +506,41 @@ class BookingCalendar {
                     break;
             }
             
-            info.innerHTML = '<div class=\"availability-message ' + className + '\">' + message + '</div>';
+            info.innerHTML = '<div class=\"availability-message ' + className + '\" style=\"background: rgba(100, 255, 218, 0.1); border: 1px solid #64ffda; border-radius: 8px; padding: 1rem; margin: 1rem 0; color: #64ffda; text-align: center; font-weight: bold;\">' + message + '</div>';
         }
         
         // Inizializza eventi al caricamento
         document.addEventListener('DOMContentLoaded', function() {
-            attachCalendarEvents();
+            setTimeout(function() {
+                attachCalendarEvents();
+            }, 100);
         });
+        
+        // Aggiungi CSS per selezione
+        const style = document.createElement('style');
+        style.textContent = `
+            .calendar-day.selected {
+                background: rgba(100, 255, 218, 0.3) !important;
+                border: 2px solid #64ffda !important;
+                transform: scale(1.05);
+            }
+            .availability-message.available {
+                border-color: #28a745 !important;
+                color: #28a745 !important;
+                background: rgba(40, 167, 69, 0.1) !important;
+            }
+            .availability-message.partial {
+                border-color: #ffc107 !important;
+                color: #ffc107 !important;
+                background: rgba(255, 193, 7, 0.1) !important;
+            }
+            .availability-message.full {
+                border-color: #dc3545 !important;
+                color: #dc3545 !important;
+                background: rgba(220, 53, 69, 0.1) !important;
+            }
+        `;
+        document.head.appendChild(style);
         </script>";
     }
 }

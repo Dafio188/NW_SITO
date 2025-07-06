@@ -1,6 +1,23 @@
 <?php
 require_once __DIR__ . '/../includes/config.php';
 
+// Gestione richieste AJAX per calendario
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'calendar') {
+    require_once __DIR__ . '/../includes/booking_calendar.php';
+    $calendar = getBookingCalendar();
+    
+    $year = (int)($_GET['year'] ?? date('Y'));
+    $month = (int)($_GET['month'] ?? date('n'));
+    
+    // Valida anno e mese
+    if ($year < 2024 || $year > 2030) $year = date('Y');
+    if ($month < 1 || $month > 12) $month = date('n');
+    
+    // Restituisci solo HTML del calendario
+    echo $calendar->generateCalendarHTML($year, $month);
+    exit;
+}
+
 // Servizi disponibili - DEFINITI PRIMA DEL CONTROLLO POST
 $services = [
     'osservazione' => [

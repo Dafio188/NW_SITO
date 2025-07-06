@@ -77,11 +77,46 @@ try {
     $confirmedBookings = count(array_filter($bookings, fn($b) => ($b['status'] ?? 'pending') === 'confirmed'));
     $totalSpent = array_sum(array_column(array_filter($bookings, fn($b) => ($b['status'] ?? 'pending') === 'confirmed'), 'total_amount'));
     
+    // Separa prenotazioni per stato
+    $upcomingBookings = array_filter($bookings, fn($b) => 
+        ($b['status'] ?? 'pending') === 'confirmed' && 
+        ($b['booking_date'] ?? '') >= date('Y-m-d')
+    );
+    $pastBookings = array_filter($bookings, fn($b) => 
+        ($b['status'] ?? 'pending') === 'confirmed' && 
+        ($b['booking_date'] ?? '') < date('Y-m-d')
+    );
+    $pendingBookingsArray = array_filter($bookings, fn($b) => ($b['status'] ?? 'pending') === 'pending');
+    
 } catch (Exception $e) {
     error_log("Errore recupero prenotazioni utente: " . $e->getMessage());
     $debug_info['error'] = $e->getMessage();
     $bookings = [];
+    $upcomingBookings = [];
+    $pastBookings = [];
+    $pendingBookingsArray = [];
     $totalBookings = $pendingBookings = $confirmedBookings = $totalSpent = 0;
+}
+
+// Funzione per ottenere icona servizio
+function getServiceIcon($serviceName) {
+    $icons = [
+        'Osservazione Guidata' => '🔭',
+        'Workshop Astrofotografia' => '📸',
+        'Turismo Astronomico' => '🌟',
+        'Corso di Astronomia' => '🎓'
+    ];
+    return $icons[$serviceName] ?? '🌌';
+}
+
+// Funzione per ottenere colore status
+function getStatusColor($status) {
+    $colors = [
+        'pending' => ['bg' => 'rgba(255, 193, 7, 0.1)', 'border' => '#ffc107', 'text' => '#ffc107'],
+        'confirmed' => ['bg' => 'rgba(40, 167, 69, 0.1)', 'border' => '#28a745', 'text' => '#28a745'],
+        'cancelled' => ['bg' => 'rgba(220, 53, 69, 0.1)', 'border' => '#dc3545', 'text' => '#dc3545']
+    ];
+    return $colors[$status] ?? $colors['pending'];
 }
 ?>
 <!DOCTYPE html>
@@ -89,43 +124,75 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Le Mie Prenotazioni - AstroGuida</title>
-    <meta name="description" content="Visualizza e gestisci le tue prenotazioni per esperienze astronomiche con AstroGuida">
+    <title>Dashboard Prenotazioni - AstroGuida</title>
+    <meta name="description" content="Gestisci le tue prenotazioni astronomiche con AstroGuida">
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="icon" href="/favicon.jpg" type="image/jpeg">
     
     <style>
-        .bookings-container {
-            max-width: 1200px;
+        .dashboard-container {
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
         }
         
-        .debug-info {
-            background: rgba(255, 193, 7, 0.1);
-            border: 1px solid #ffc107;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            color: #ffc107;
-            font-family: monospace;
-            font-size: 0.9rem;
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .dashboard-title {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #64ffda 0%, #007aff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
         }
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
         }
         
         .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 20px;
+            padding: 2rem;
             text-align: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(100, 255, 218, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #64ffda, #007aff);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
         
         .stat-number {
@@ -137,146 +204,213 @@ try {
         
         .stat-label {
             color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         
-        .bookings-list {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1.5rem;
-            backdrop-filter: blur(10px);
+        .bookings-section {
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .booking-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(100, 255, 218, 0.2);
-        }
-        
-        .booking-item {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid #64ffda;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
-        .booking-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        .booking-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 6px;
+            background: linear-gradient(135deg, #64ffda, #007aff);
         }
         
-        .booking-item.pending {
-            border-left-color: #ffc107;
-        }
-        
-        .booking-item.confirmed {
-            border-left-color: #28a745;
-        }
-        
-        .booking-item.cancelled {
-            border-left-color: #dc3545;
-            opacity: 0.7;
+        .booking-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
         }
         
         .booking-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
-        .booking-title {
-            font-size: 1.3rem;
+        .booking-service {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .service-icon {
+            font-size: 2.5rem;
+            background: rgba(100, 255, 218, 0.1);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+        }
+        
+        .service-name {
+            font-size: 1.5rem;
             font-weight: bold;
             color: white;
         }
         
         .booking-status {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
             font-weight: bold;
             text-transform: uppercase;
-        }
-        
-        .status-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-            border: 1px solid #ffc107;
-        }
-        
-        .status-confirmed {
-            background: rgba(40, 167, 69, 0.2);
-            color: #28a745;
-            border: 1px solid #28a745;
-        }
-        
-        .status-cancelled {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-            border: 1px solid #dc3545;
+            letter-spacing: 0.5px;
         }
         
         .booking-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
         
-        .booking-detail {
-            color: rgba(255, 255, 255, 0.8);
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .booking-detail strong {
+        .detail-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.5rem;
+        }
+        
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: bold;
             color: #64ffda;
         }
         
         .booking-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 1rem;
+            flex-wrap: wrap;
         }
         
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            border-radius: 6px;
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
             text-decoration: none;
+            font-weight: bold;
             transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        .btn-primary-small {
-            background: #007aff;
+        .btn-primary {
+            background: linear-gradient(135deg, #007aff, #0056b3);
             color: white;
         }
         
-        .btn-primary-small:hover {
-            background: #0056b3;
+        .btn-primary:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
         }
         
-        .btn-success-small {
-            background: #28a745;
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
             color: white;
         }
         
-        .btn-success-small:hover {
-            background: #1e7e34;
+        .btn-success:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
         }
         
-        .no-bookings {
+        .empty-state {
             text-align: center;
-            padding: 3rem;
+            padding: 4rem 2rem;
             color: rgba(255, 255, 255, 0.6);
         }
         
-        .no-bookings h3 {
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: bold;
             color: #64ffda;
             margin-bottom: 1rem;
         }
         
+        .debug-info {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #ffc107;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .quick-actions {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .quick-action {
+            background: linear-gradient(135deg, rgba(100, 255, 218, 0.1), rgba(0, 122, 255, 0.1));
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .quick-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+        }
+        
         @media (max-width: 768px) {
-            .bookings-container {
+            .dashboard-container {
                 padding: 1rem;
+            }
+            
+            .dashboard-title {
+                font-size: 2rem;
             }
             
             .booking-header {
@@ -285,8 +419,17 @@ try {
                 gap: 1rem;
             }
             
+            .booking-details {
+                grid-template-columns: 1fr;
+            }
+            
             .booking-actions {
                 flex-direction: column;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
@@ -301,12 +444,12 @@ try {
     <div class="main-container">
         <?php include __DIR__ . '/../includes/header.php'; ?>
 
-        <div class="bookings-container">
+        <div class="dashboard-container">
             <!-- Header -->
-            <div class="section-header text-center mb-8">
-                <h1 class="section-title">📅 Le Mie Prenotazioni</h1>
-                <p class="section-subtitle">
-                    Gestisci le tue esperienze astronomiche con AstroGuida
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">🌟 La Tua Dashboard Stellare</h1>
+                <p class="dashboard-subtitle">
+                    Benvenuto, <?= htmlspecialchars($user['name']) ?>! Gestisci le tue avventure astronomiche
                 </p>
             </div>
 
@@ -321,112 +464,234 @@ try {
             <!-- Statistiche -->
             <div class="stats-grid">
                 <div class="stat-card">
+                    <div class="stat-icon">📊</div>
                     <div class="stat-number"><?= $totalBookings ?></div>
                     <div class="stat-label">Prenotazioni Totali</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
                     <div class="stat-number"><?= $pendingBookings ?></div>
                     <div class="stat-label">In Attesa</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">✅</div>
                     <div class="stat-number"><?= $confirmedBookings ?></div>
                     <div class="stat-label">Confermate</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">💰</div>
                     <div class="stat-number">€<?= number_format($totalSpent, 2) ?></div>
                     <div class="stat-label">Spesa Totale</div>
                 </div>
             </div>
 
-            <!-- Lista Prenotazioni -->
-            <div class="bookings-list">
-                <h2 class="text-2xl font-bold text-white mb-6">🗓️ Cronologia Prenotazioni</h2>
-                
-                <?php if (empty($bookings)): ?>
-                    <div class="no-bookings">
-                        <h3>🌟 Nessuna Prenotazione Trovata</h3>
-                        <p>Non hai ancora effettuato prenotazioni.</p>
-                        <p>Inizia la tua avventura astronomica!</p>
-                        <a href="/?page=services" class="btn-primary-small" style="display: inline-block; margin-top: 1rem;">
-                            Prenota Ora
-                        </a>
-                        <br><br>
-                        <p><small><a href="?debug=1" style="color: #64ffda;">Mostra info debug</a></small></p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($bookings as $booking): ?>
-                        <div class="booking-item <?= $booking['status'] ?? 'pending' ?>">
-                            <div class="booking-header">
-                                <div class="booking-title">
-                                    <?= htmlspecialchars($booking['service_name'] ?? 'Servizio Non Specificato') ?>
-                                </div>
-                                <div class="booking-status status-<?= $booking['status'] ?? 'pending' ?>">
-                                    <?= ucfirst($booking['status'] ?? 'pending') ?>
-                                </div>
+            <!-- Prenotazioni In Attesa -->
+            <?php if (!empty($pendingBookingsArray)): ?>
+            <div class="bookings-section">
+                <h2 class="section-title">⏳ Prenotazioni In Attesa di Pagamento</h2>
+                <?php foreach ($pendingBookingsArray as $booking): ?>
+                    <?php $statusColor = getStatusColor($booking['status'] ?? 'pending'); ?>
+                    <div class="booking-card">
+                        <div class="booking-header">
+                            <div class="booking-service">
+                                <div class="service-icon"><?= getServiceIcon($booking['service_name'] ?? '') ?></div>
+                                <div class="service-name"><?= htmlspecialchars($booking['service_name'] ?? 'Servizio Non Specificato') ?></div>
                             </div>
-                            
-                            <div class="booking-details">
-                                <div class="booking-detail">
-                                    <strong>📅 Data:</strong><br>
-                                    <?= $booking['booking_date'] ? date('d/m/Y', strtotime($booking['booking_date'])) : 'Non specificata' ?>
-                                </div>
-                                <div class="booking-detail">
-                                    <strong>🕒 Orario:</strong><br>
-                                    <?= $booking['booking_time'] ?? 'Non specificato' ?>
-                                </div>
-                                <div class="booking-detail">
-                                    <strong>👥 Partecipanti:</strong><br>
-                                    <?= $booking['participants'] ?? 1 ?>
-                                </div>
-                                <div class="booking-detail">
-                                    <strong>💰 Importo:</strong><br>
-                                    €<?= number_format($booking['total_amount'] ?? 0, 2) ?>
-                                </div>
-                                <div class="booking-detail">
-                                    <strong>🎫 Codice:</strong><br>
-                                    <?= $booking['booking_id'] ?? 'N/A' ?>
-                                </div>
-                                <div class="booking-detail">
-                                    <strong>�� Email:</strong><br>
-                                    <?= htmlspecialchars($booking['email'] ?? 'N/A') ?>
-                                </div>
-                            </div>
-                            
-                            <?php if (!empty($booking['message'])): ?>
-                                <div class="booking-detail">
-                                    <strong>📝 Note:</strong><br>
-                                    <?= htmlspecialchars($booking['message']) ?>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <div class="booking-actions">
-                                <?php if (($booking['status'] ?? 'pending') === 'pending'): ?>
-                                    <a href="/?page=booking&booking_id=<?= $booking['booking_id'] ?>" class="btn-primary-small">
-                                        💳 Completa Pagamento
-                                    </a>
-                                <?php endif; ?>
-                                
-                                <a href="/?page=contact" class="btn-success-small">
-                                    📞 Contatta Supporto
-                                </a>
+                            <div class="booking-status" style="background: <?= $statusColor['bg'] ?>; border: 1px solid <?= $statusColor['border'] ?>; color: <?= $statusColor['text'] ?>;">
+                                In Attesa
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                        
+                        <div class="booking-details">
+                            <div class="detail-item">
+                                <div class="detail-label">📅 Data</div>
+                                <div class="detail-value"><?= $booking['booking_date'] ? date('d/m/Y', strtotime($booking['booking_date'])) : 'Da definire' ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">🕒 Orario</div>
+                                <div class="detail-value"><?= $booking['booking_time'] ?? 'Da definire' ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">👥 Partecipanti</div>
+                                <div class="detail-value"><?= $booking['participants'] ?? 1 ?> persone</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">💰 Importo</div>
+                                <div class="detail-value">€<?= number_format($booking['total_amount'] ?? 0, 2) ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">🎫 Codice</div>
+                                <div class="detail-value"><?= $booking['booking_id'] ?? 'N/A' ?></div>
+                            </div>
+                        </div>
+                        
+                        <div class="booking-actions">
+                            <a href="/paypal-payment.php?booking_id=<?= urlencode($booking['booking_id']) ?>&amount=<?= $booking['total_amount'] ?>" class="btn-action btn-primary">
+                                💳 Completa Pagamento
+                            </a>
+                            <a href="/?page=contact" class="btn-action btn-success">
+                                📞 Contatta Supporto
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
+            <?php endif; ?>
+
+            <!-- Prenotazioni Future -->
+            <?php if (!empty($upcomingBookings)): ?>
+            <div class="bookings-section">
+                <h2 class="section-title">🚀 Prossime Avventure</h2>
+                <?php foreach ($upcomingBookings as $booking): ?>
+                    <?php $statusColor = getStatusColor($booking['status'] ?? 'confirmed'); ?>
+                    <div class="booking-card">
+                        <div class="booking-header">
+                            <div class="booking-service">
+                                <div class="service-icon"><?= getServiceIcon($booking['service_name'] ?? '') ?></div>
+                                <div class="service-name"><?= htmlspecialchars($booking['service_name'] ?? 'Servizio Non Specificato') ?></div>
+                            </div>
+                            <div class="booking-status" style="background: <?= $statusColor['bg'] ?>; border: 1px solid <?= $statusColor['border'] ?>; color: <?= $statusColor['text'] ?>;">
+                                Confermata
+                            </div>
+                        </div>
+                        
+                        <div class="booking-details">
+                            <div class="detail-item">
+                                <div class="detail-label">📅 Data</div>
+                                <div class="detail-value"><?= $booking['booking_date'] ? date('d/m/Y', strtotime($booking['booking_date'])) : 'Da definire' ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">🕒 Orario</div>
+                                <div class="detail-value"><?= $booking['booking_time'] ?? 'Da definire' ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">👥 Partecipanti</div>
+                                <div class="detail-value"><?= $booking['participants'] ?? 1 ?> persone</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">💰 Importo</div>
+                                <div class="detail-value">€<?= number_format($booking['total_amount'] ?? 0, 2) ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">🎫 Codice</div>
+                                <div class="detail-value"><?= $booking['booking_id'] ?? 'N/A' ?></div>
+                            </div>
+                        </div>
+                        
+                        <?php if (!empty($booking['message'])): ?>
+                        <div class="detail-item" style="margin-bottom: 1rem;">
+                            <div class="detail-label">📝 Note</div>
+                            <div class="detail-value"><?= htmlspecialchars($booking['message']) ?></div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="booking-actions">
+                            <a href="/?page=contact" class="btn-action btn-success">
+                                📞 Contatta Supporto
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <!-- Prenotazioni Passate -->
+            <?php if (!empty($pastBookings)): ?>
+            <div class="bookings-section">
+                <h2 class="section-title">📚 Avventure Passate</h2>
+                <?php foreach (array_slice($pastBookings, 0, 3) as $booking): // Mostra solo le ultime 3 ?>
+                    <?php $statusColor = getStatusColor($booking['status'] ?? 'confirmed'); ?>
+                    <div class="booking-card" style="opacity: 0.8;">
+                        <div class="booking-header">
+                            <div class="booking-service">
+                                <div class="service-icon"><?= getServiceIcon($booking['service_name'] ?? '') ?></div>
+                                <div class="service-name"><?= htmlspecialchars($booking['service_name'] ?? 'Servizio Non Specificato') ?></div>
+                            </div>
+                            <div class="booking-status" style="background: <?= $statusColor['bg'] ?>; border: 1px solid <?= $statusColor['border'] ?>; color: <?= $statusColor['text'] ?>;">
+                                Completata
+                            </div>
+                        </div>
+                        
+                        <div class="booking-details">
+                            <div class="detail-item">
+                                <div class="detail-label">📅 Data</div>
+                                <div class="detail-value"><?= $booking['booking_date'] ? date('d/m/Y', strtotime($booking['booking_date'])) : 'N/A' ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">🕒 Orario</div>
+                                <div class="detail-value"><?= $booking['booking_time'] ?? 'N/A' ?></div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">👥 Partecipanti</div>
+                                <div class="detail-value"><?= $booking['participants'] ?? 1 ?> persone</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">💰 Importo</div>
+                                <div class="detail-value">€<?= number_format($booking['total_amount'] ?? 0, 2) ?></div>
+                            </div>
+                        </div>
+                        
+                        <div class="booking-actions">
+                            <a href="/?page=services" class="btn-action btn-primary">
+                                🔄 Prenota Ancora
+                            </a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <!-- Stato Vuoto -->
+            <?php if (empty($bookings)): ?>
+            <div class="empty-state">
+                <div class="empty-icon">🌟</div>
+                <h3 class="empty-title">Nessuna Prenotazione Trovata</h3>
+                <p>Non hai ancora effettuato prenotazioni.</p>
+                <p>Inizia la tua avventura astronomica!</p>
+                <div style="margin-top: 2rem;">
+                    <a href="/?page=services" class="btn-action btn-primary">
+                        🚀 Prenota Ora
+                    </a>
+                </div>
+                <br>
+                <p><small><a href="?debug=1" style="color: #64ffda;">Mostra info debug</a></small></p>
+            </div>
+            <?php endif; ?>
             
             <!-- Azioni Rapide -->
-            <div class="text-center mt-8">
-                <a href="/?page=services" class="btn btn-primary btn-lg mr-4">
-                    🚀 Nuova Prenotazione
+            <div class="quick-actions">
+                <a href="/?page=services" class="quick-action">
+                    <span style="font-size: 1.5rem;">🚀</span>
+                    Nuova Prenotazione
                 </a>
-                <a href="/?page=profile" class="btn btn-secondary btn-lg">
-                    👤 Gestisci Profilo
+                <a href="/?page=gallery" class="quick-action">
+                    <span style="font-size: 1.5rem;">📸</span>
+                    Galleria Astronomica
+                </a>
+                <a href="/?page=profile" class="quick-action">
+                    <span style="font-size: 1.5rem;">👤</span>
+                    Gestisci Profilo
                 </a>
             </div>
         </div>
 
         <?php include __DIR__ . '/../includes/footer.php'; ?>
     </div>
+
+    <script>
+        // Animazioni al caricamento
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.booking-card, .stat-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
 </body>
 </html> 
